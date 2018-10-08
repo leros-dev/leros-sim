@@ -57,7 +57,14 @@ template <typename T, unsigned B> inline T signextend(const T x) {
   } s;
   return s.x = x;
 }
+
+/**
+pattern match the instruction going from MSB->LSB. This is done to be
+able to easily add more instructions later on, while not defining what a
+'-' (unspecified) bit has to be, without breaking the patterns.
+*/
 const std::map<std::string, LerosInstr> InstMap{
+    /*{"MSB-----LSB", LerosInstr}*/
     {"00000", LerosInstr::nop},      {"000010", LerosInstr::add},
     {"000011", LerosInstr::sub},     {"00010", LerosInstr::shr},
     {"00011", LerosInstr::unused},   {"0010000", LerosInstr::load},
@@ -97,14 +104,17 @@ public:
     // datastructure is a std::map
     std::ifstream is(filename, std::ifstream::binary);
     is.seekg(0, is.end);
-    int length = is.tellg();
+    m_textSize = is.tellg();
+    assert(m_textSize % 2 == 0 && "File must be 16-bit aligned");
     is.seekg(0, is.beg);
-    char *buffer = new char[length];
-    is.read(buffer, length);
-    for (int i = 0; i < length; i++) {
+    char *buffer = new char[m_textSize];
+    is.read(buffer, m_textSize);
+    for (int i = 0; i < m_textSize; i++) {
       m_mem[i] = buffer[i];
     }
     delete[] buffer;
+
+    reset();
   }
 
   void printState() {
@@ -114,8 +124,17 @@ public:
     }
   }
 
+  void reset() {
+    for (auto &r : m_reg) {
+      r = 0;
+    }
+    m_acc = 0;
+    m_addr = 0;
+    m_pc = 0;
+  }
+
   int clock() {
-    uint16_t instr = m_mem[m_pc + 1] << 8 | m_mem[m_pc];
+    uint16_t instr = m_mem[m_pc] << 8 | m_mem[m_pc + 1];
     if (m_pc > m_textSize) {
       return 1;
     } else {
@@ -142,23 +161,21 @@ private:
 
     int i = 0;
 
-    // pattern match the instruction going from MSB->LSB. This is done to be
-    // able to easily add more instructions later on, while not defining what a
-    // '-' (unspecified) bit has to be, without breaking the patterns
-
     while (i < 8) {
       // Reverse iterate to allow deletion
-      for (auto it = iMapCpy.rbegin(); it != iMapCpy.rend(); it--) {
-        if (iMapCpy.size() == 1 || it->first[i] == '\0') {
+      for (auto iter = iMapCpy.begin(); iter != iMapCpy.end();) {
+        if (iMapCpy.size() == 1) {
           // Found end-of-string of a potential match instruction - ie.
           // instruction matched, or only one instruction match candidate
           // remains in map
-          return it->second;
+          return iter->second;
+        }
+
+        if (iter->first[i] != buffer[i]) {
+          // Could not match instruction, remove from map
+          iMapCpy.erase(iter++);
         } else {
-          if (it->first[i] != buffer[i]) {
-            // Could not match instruction, remove from map
-            iMapCpy.erase(it->first);
-          }
+          iter++;
         }
       }
       i++;
