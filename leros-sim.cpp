@@ -30,6 +30,12 @@ enum class LerosInstr {
   loadh,
   loadh2,
   loadh3,
+#ifdef LEROS64
+  loadh4,
+  loadh5,
+  loadh6,
+  loadh7,
+#endif
   store,
   out,
   in,
@@ -51,36 +57,23 @@ template <typename T, unsigned B> inline T signextend(const T x) {
   } s;
   return s.x = x;
 }
-const std::map<std::string, LerosInstr> InstMap{{"00000", LerosInstr::nop},
-                                                {"000010", LerosInstr::add},
-                                                {"000011", LerosInstr::sub},
-                                                {"00010", LerosInstr::shr},
-                                                {"00011", LerosInstr::unused},
-                                                {"0010000", LerosInstr::load},
-                                                {"0010001", LerosInstr::And},
-                                                {"0010010", LerosInstr::Or},
-                                                {"0010011", LerosInstr::Xor},
-                                                {"0010100", LerosInstr::loadh},
-                                                {"0010101", LerosInstr::loadh2},
-                                                {"0010110", LerosInstr::loadh3},
-                                                {"00110", LerosInstr::store},
-                                                {"001110", LerosInstr::out},
-                                                {"000001", LerosInstr::in},
-                                                {"01000", LerosInstr::jal},
-                                                {"01001000", LerosInstr::br},
-                                                {"01001001", LerosInstr::brz},
-                                                {"01001010", LerosInstr::brnz},
-                                                {"01001011", LerosInstr::brp},
-                                                {"01001100", LerosInstr::brn},
-                                                {"01010", LerosInstr::ldaddr},
-                                                {"01100", LerosInstr::loadind},
-                                                {"01110", LerosInstr::storeind}
+const std::map<std::string, LerosInstr> InstMap{
+    {"00000", LerosInstr::nop},      {"000010", LerosInstr::add},
+    {"000011", LerosInstr::sub},     {"00010", LerosInstr::shr},
+    {"00011", LerosInstr::unused},   {"0010000", LerosInstr::load},
+    {"0010001", LerosInstr::And},    {"0010010", LerosInstr::Or},
+    {"0010011", LerosInstr::Xor},    {"0010100", LerosInstr::loadh},
+    {"0010101", LerosInstr::loadh2}, {"0010110", LerosInstr::loadh3},
 #ifdef LEROS64
-                                                ,
-                                                {"01110", LerosInstr::storeind}
+    {"NA", LerosInstr::loadh4},      {"NA", LerosInstr::loadh5},
+    {"NA", LerosInstr::loadh6},      {"NA", LerosInstr::loadh7},
 #endif
-
-};
+    {"00110", LerosInstr::store},    {"001110", LerosInstr::out},
+    {"000001", LerosInstr::in},      {"01000", LerosInstr::jal},
+    {"01001000", LerosInstr::br},    {"01001001", LerosInstr::brz},
+    {"01001010", LerosInstr::brnz},  {"01001011", LerosInstr::brp},
+    {"01001100", LerosInstr::brn},   {"01010", LerosInstr::ldaddr},
+    {"01100", LerosInstr::loadind},  {"01110", LerosInstr::storeind}};
 
 inline void itoa(unsigned v, char *buf) {
   switch (v) {
@@ -153,12 +146,13 @@ private:
     // able to easily add more instructions later on, while not defining what a
     // '-' (unspecified) bit has to be, without breaking the patterns
 
-    while (i < 8 && iMapCpy.size() > 2) {
+    while (i < 8) {
       // Reverse iterate to allow deletion
       for (auto it = iMapCpy.rbegin(); it != iMapCpy.rend(); it--) {
-        if (it->first[i] == '\0') {
+        if (iMapCpy.size() == 1 || it->first[i] == '\0') {
           // Found end-of-string of a potential match instruction - ie.
-          // instruction mathced
+          // instruction matched, or only one instruction match candidate
+          // remains in map
           return it->second;
         } else {
           if (it->first[i] != buffer[i]) {
@@ -196,7 +190,11 @@ private:
     }
     case LerosInstr::shr: {
       assert(imm < XLen);
-      MVT mask = XLen == 32 ? 0x7FFFFFFF : 0x7FFFFFFFFFFFFFFFFF;
+#ifdef LEROS64
+      MVT mask = 0x7FFFFFFFFFFFFFFF;
+#else
+      MVT mask = 0x7FFFFFFF;
+#endif
       m_acc >>= 1;
       m_acc &= mask;
       break;
@@ -260,6 +258,40 @@ private:
       m_acc |= bottom;
       break;
     }
+#ifdef LEROS64
+    case LerosInstr::loadh4: {
+      // the immediate has been sign extended through getImmediate()
+      MVT bottom = m_acc & 0xFFFFFFFF;
+      m_acc = 0;
+      m_acc |= imm << 32;
+      m_acc |= bottom;
+      break;
+    }
+    case LerosInstr::loadh5: {
+      // the immediate has been sign extended through getImmediate()
+      MVT bottom = m_acc & 0xFFFFFFFFFF;
+      m_acc = 0;
+      m_acc |= imm << 40;
+      m_acc |= bottom;
+      break;
+    }
+    case LerosInstr::loadh6: {
+      // the immediate has been sign extended through getImmediate()
+      MVT bottom = m_acc & 0xFFFFFFFFFFFF;
+      m_acc = 0;
+      m_acc |= imm << 48;
+      m_acc |= bottom;
+      break;
+    }
+    case LerosInstr::loadh7: {
+      // the immediate has been sign extended through getImmediate()
+      MVT bottom = m_acc & 0xFFFFFFFFFFFFFF;
+      m_acc = 0;
+      m_acc |= imm << 56;
+      m_acc |= bottom;
+      break;
+    }
+#endif
     case LerosInstr::store: {
       if (isRegister) {
         m_reg[uImmRaw] = m_acc;
@@ -331,8 +363,7 @@ private:
 };
 
 int main(int argc, char *argv[]) {
-  std::cout << "Leros " << XLen << " bit simulator" << std::endl;
-  // Load program into m_memory
+  std::cout << "Leros " << XLen << " bit ISA simulator" << std::endl;
   if (argc < 2) {
     std::cout << "Usage: leros-sim [filename.bin]";
     return 1;
