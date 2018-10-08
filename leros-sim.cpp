@@ -67,22 +67,22 @@ immediate/register selection away from instruction matching
 */
 const std::map<std::string, LerosInstr> InstMap{
     /*{"MSB-----LSB", LerosInstr}*/
-    {"00000", LerosInstr::nop},      {"000010", LerosInstr::add},
-    {"000011", LerosInstr::sub},     {"00010", LerosInstr::shr},
-    {"00011", LerosInstr::unused},   {"0010000", LerosInstr::load},
-    {"0010001", LerosInstr::And},    {"0010010", LerosInstr::Or},
-    {"0010011", LerosInstr::Xor},    {"0010100", LerosInstr::loadh},
-    {"0010101", LerosInstr::loadh2}, {"0010110", LerosInstr::loadh3},
+    {"00000", LerosInstr::nop},       {"000010", LerosInstr::add},
+    {"000011", LerosInstr::sub},      {"00010", LerosInstr::shr},
+    {"00011", LerosInstr::unused},    {"0010000", LerosInstr::load},
+    {"0010001", LerosInstr::And},     {"0010010", LerosInstr::Or},
+    {"0010011", LerosInstr::Xor},     {"0010100", LerosInstr::loadh},
+    {"0010101", LerosInstr::loadh2},  {"0010110", LerosInstr::loadh3},
 #ifdef LEROS64
-    {"NA", LerosInstr::loadh4},      {"NA", LerosInstr::loadh5},
-    {"NA", LerosInstr::loadh6},      {"NA", LerosInstr::loadh7},
+    {"NANANANA", LerosInstr::loadh4}, {"NANANANA", LerosInstr::loadh5},
+    {"NANANANA", LerosInstr::loadh6}, {"NANANANA", LerosInstr::loadh7},
 #endif
-    {"00110", LerosInstr::store},    {"001110", LerosInstr::out},
-    {"000001", LerosInstr::in},      {"01000", LerosInstr::jal},
-    {"01001000", LerosInstr::br},    {"01001001", LerosInstr::brz},
-    {"01001010", LerosInstr::brnz},  {"01001011", LerosInstr::brp},
-    {"01001100", LerosInstr::brn},   {"01010", LerosInstr::ldaddr},
-    {"01100", LerosInstr::loadind},  {"01110", LerosInstr::storeind}};
+    {"00110", LerosInstr::store},     {"001110", LerosInstr::out},
+    {"000001", LerosInstr::in},       {"01000", LerosInstr::jal},
+    {"01001000", LerosInstr::br},     {"01001001", LerosInstr::brz},
+    {"01001010", LerosInstr::brnz},   {"01001011", LerosInstr::brp},
+    {"01001100", LerosInstr::brn},    {"01010", LerosInstr::ldaddr},
+    {"01100", LerosInstr::loadind},   {"01110", LerosInstr::storeind}};
 
 inline void itoa(unsigned v, char *buf) {
   switch (v) {
