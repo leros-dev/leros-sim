@@ -120,8 +120,12 @@ public:
   void printState() {
     // Print registers
     for (int i = 0; i < 256; i++) {
-      std::cout << m_reg[i] << " ";
+      std::cout << i << ":" << m_reg[i] << " ";
     }
+    std::cout << std::endl;
+    std::cout << "ACC: " << m_acc << std::endl;
+    std::cout << "ADDR: " << m_addr << std::endl;
+    std::cout << "PC: " << m_pc << std::endl;
   }
 
   void reset() {
