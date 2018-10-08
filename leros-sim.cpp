@@ -62,6 +62,8 @@ template <typename T, unsigned B> inline T signextend(const T x) {
 pattern match the instruction going from MSB->LSB. This is done to be
 able to easily add more instructions later on, while not defining what a
 '-' (unspecified) bit has to be, without breaking the patterns.
+Another benefit of this is, that we can separate the logic for
+immediate/register selection away from instruction matching
 */
 const std::map<std::string, LerosInstr> InstMap{
     /*{"MSB-----LSB", LerosInstr}*/
