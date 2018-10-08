@@ -5,6 +5,8 @@
 #include <map>
 #include <stdint.h>
 
+#include "elfio/elfio.hpp"
+
 #ifdef LEROS64
 #define MVT uint64_t
 #define MVT_S int64_t
@@ -104,17 +106,24 @@ public:
   LerosSim(char *filename) {
     // Load file into main m_memory - has some overhead, but required if m_mem
     // datastructure is a std::map
-    std::ifstream is(filename, std::ifstream::binary);
-    is.seekg(0, is.end);
-    m_textSize = is.tellg();
-    assert(m_textSize % 2 == 0 && "File must be 16-bit aligned");
-    is.seekg(0, is.beg);
-    char *buffer = new char[m_textSize];
-    is.read(buffer, m_textSize);
-    for (int i = 0; i < m_textSize; i++) {
-      m_mem[i] = buffer[i];
+
+    if (!m_reader.load(filename)) {
+      std::cout << "Could not load as .ELF file, loading as flat binary"
+                << std::endl;
+      std::ifstream is(filename, std::ifstream::binary);
+      is.seekg(0, is.end);
+      m_textSize = is.tellg();
+      assert(m_textSize % 2 == 0 && "File must be 16-bit aligned");
+      is.seekg(0, is.beg);
+      char *buffer = new char[m_textSize];
+      is.read(buffer, m_textSize);
+      for (int i = 0; i < m_textSize; i++) {
+        m_mem[i] = buffer[i];
+      }
+      delete[] buffer;
+    } else {
+      std::cout << "Loading .ELF file" << std::endl;
     }
-    delete[] buffer;
 
     reset();
   }
@@ -319,7 +328,7 @@ private:
       if (!isImmediate) {
         m_reg[uImmRaw] = m_acc;
       } else {
-        assert("Store directly from int to m_reg?");
+        assert("store does not work with and immediate operand?");
       }
       break;
     }
@@ -383,6 +392,7 @@ private:
   MVT m_addr = 0;
   MVT m_pc = 0;
   int m_textSize;
+  ELFIO::elfio m_reader;
 };
 
 int main(int argc, char *argv[]) {

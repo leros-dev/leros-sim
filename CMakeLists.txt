@@ -4,7 +4,13 @@ set (CMAKE_CXX_STANDARD 17)
 
 option(LEROS64 "Leros 64-bit simulator" OFF)
 
-add_executable(leros-sim leros-sim.cpp leros-sim.h)
+
+# ELFIO
+file(GLOB ELFIO_H external/elfio/*.hpp)
+
+add_executable(leros-sim leros-sim.cpp leros-sim.h ${ELFIO_H})
+
+include_directories(leros-sim public "external")
 
 if(LEROS64)
     target_compile_definitions(leros-sim PRIVATE -DLEROS64)
