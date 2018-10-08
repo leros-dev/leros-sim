@@ -124,8 +124,8 @@ public:
   }
 
 private:
-  MVT_S getImmediate(uint16_t instr, bool isRegister) {
-    if (isRegister) {
+  MVT_S getImmediate(uint16_t instr, bool isImmediate) {
+    if (!isImmediate) {
       return m_reg.at(instr & 0xFF);
     } else {
       return signextend<MVT_S, 8>(instr & 0xFF);
@@ -167,8 +167,8 @@ private:
   }
 
   int execInstr(uint16_t instr) {
-    const bool isRegister = instr & 0b100000000;
-    const MVT_S imm = getImmediate(instr, isRegister);
+    const bool isImmediate = instr & 0b100000000;
+    const MVT_S imm = getImmediate(instr, isImmediate);
     const uint8_t uImmRaw = instr & 0xFF;
     const int8_t sImmRaw = instr & 0xFF;
     const uint8_t upperInstr = (instr >> 8) & 0xFF;
@@ -207,7 +207,7 @@ private:
       break;
     }
     case LerosInstr::And: {
-      if (isRegister) {
+      if (!isImmediate) {
         m_acc &= imm;
       } else {
         // Only & the lower 8-bits
@@ -219,11 +219,11 @@ private:
       break;
     }
     case LerosInstr::Or: {
-      m_acc |= isRegister ? imm : imm & 0xFF;
+      m_acc |= !isImmediate ? imm : imm & 0xFF;
       break;
     }
     case LerosInstr::Xor: {
-      if (isRegister) {
+      if (!isImmediate) {
         m_acc ^= imm;
       } else {
         // Only and the lower 8-bits
@@ -293,7 +293,7 @@ private:
     }
 #endif
     case LerosInstr::store: {
-      if (isRegister) {
+      if (!isImmediate) {
         m_reg[uImmRaw] = m_acc;
       } else {
         assert("Store directly from int to m_reg?");
