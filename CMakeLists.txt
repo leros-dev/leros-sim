@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8.9)
+project (leros-sim)
+set (CMAKE_CXX_STANDARD 17)
+
+option(LEROS64 "Leros 64-bit simulator" OFF)
+
+add_executable(leros-sim leros-sim.cpp leros-sim.h)
+
+if(LEROS64)
+    target_compile_definitions(leros-sim PRIVATE -DLEROS64)
+endif()
