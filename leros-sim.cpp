@@ -156,7 +156,10 @@ public:
   }
 
   int clock() {
-    uint16_t instr = m_mem[m_pc] << 8 | m_mem[m_pc + 1];
+    uint16_t instr = m_mem[m_pc] | m_mem[m_pc + 1] << 8;
+    std::cout << "loaded instruction at PC: " << m_pc << std::endl;
+    if (m_pc == 74)
+      std::cout << "74!" << std::endl;
     if (m_pc > m_textSize) {
       return 1;
     } else {
