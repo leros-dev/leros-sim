@@ -5,6 +5,7 @@
 #include <map>
 #include <stdint.h>
 
+#include "cxxopts/cxxopts.hpp"
 #include "elfio/elfio.hpp"
 
 #ifdef LEROS64
@@ -52,6 +53,8 @@ enum class LerosInstr {
   storeind,
   unknown
 };
+
+enum SimRetval { ALL_OK, JAL_RA_EXIT, ERROR };
 
 template <typename T, unsigned B> inline T signextend(const T x) {
   struct {
@@ -101,16 +104,20 @@ inline void itoa(unsigned v, char *buf) {
   return;
 }
 
+struct LerosOptions {
+  std::string filename;
+  bool exitOnJalRA;
+  bool printState;
+};
+
 class LerosSim {
 public:
-  LerosSim(char *filename) {
+  LerosSim(const LerosOptions &opt) : m_options(opt) {
     // Load file into main m_memory - has some overhead, but required if m_mem
     // datastructure is a std::map
 
-    if (!m_reader.load(filename)) {
-      std::cout << "Could not load as .ELF file, loading as flat binary"
-                << std::endl;
-      std::ifstream is(filename, std::ifstream::binary);
+    if (!m_reader.load(opt.filename)) {
+      std::ifstream is(opt.filename, std::ifstream::binary);
       is.seekg(0, is.end);
       m_textSize = is.tellg();
       assert(m_textSize % 2 == 0 && "File must be 16-bit aligned");
@@ -341,33 +348,35 @@ private:
       break;
     }
     case LerosInstr::jal: {
+      if (uImmRaw == 0 & m_options.exitOnJalRA)
+        return JAL_RA_EXIT;
       m_reg[uImmRaw] = m_pc + ILEN;
       m_pc = m_acc;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::br: {
       m_pc += sImmRaw * ILEN;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::brz: {
       if (m_acc == 0)
         m_pc += sImmRaw * ILEN;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::brnz: {
       if (m_acc != 0)
         m_pc += sImmRaw * ILEN;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::brp: {
       if (m_acc >= 0)
         m_pc += sImmRaw * ILEN;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::brn: {
       if (m_pc < 0)
         m_pc += sImmRaw * ILEN;
-      return 0;
+      return ALL_OK;
     }
     case LerosInstr::ldaddr: {
       m_addr = m_reg[uImmRaw];
@@ -383,7 +392,7 @@ private:
     }
     }
     m_pc += ILEN;
-    return 0;
+    return ALL_OK;
   }
 
   std::map<MVT, uint8_t> m_mem;
@@ -393,21 +402,51 @@ private:
   MVT m_pc = 0;
   int m_textSize;
   ELFIO::elfio m_reader;
+
+  LerosOptions m_options;
 };
 
+void setupOptions(cxxopts::Options &options) {
+  // clang-format off
+  options.add_options()
+          ("f,file", "File name - Required", cxxopts::value<std::string>())
+          ("je", "End simulation upon encountering jal ra", cxxopts::value<bool>()->default_value("false"))
+          ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
+          ;
+  // clang-format on
+}
+
 int main(int argc, char *argv[]) {
-  std::cout << "Leros " << XLen << " bit ISA simulator" << std::endl;
+  cxxopts::Options options("leros-sim",
+                           "32- and 64 bit simulator for the Leros ISA");
+
+  setupOptions(options);
+  LerosOptions opt;
+
   if (argc < 2) {
-    std::cout << "Usage: leros-sim [filename.bin]";
+    std::cout << options.help();
     return 1;
   }
 
-  LerosSim sim(argv[1]);
+  std::string filename;
+  bool je, ps;
+  try {
+    auto result = options.parse(argc, argv);
+    opt.filename = result["f"].as<std::string>();
+    opt.exitOnJalRA = result["je"].as<bool>();
+    opt.printState = result["ps"].as<bool>();
+  } catch (cxxopts::OptionException e) {
+    std::cout << e.what() << std::endl;
+    return 1;
+  }
+
+  LerosSim sim(opt);
 
   while (sim.clock() == 0) {
     // Clock until return != 0
   }
 
   // Show the state of the processor
-  sim.printState();
+  if (opt.printState)
+    sim.printState();
 }
