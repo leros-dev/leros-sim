@@ -9,7 +9,7 @@ class DriverOptions:
     simExecutable = ""
     testPath = ""
 
-SPECIAL_REGISTERS = ["ACC", "ADDR", "PC"]
+SPECIAL_REGISTERS = ["ACC", "ADDR", "PC", "INSTRUCTIONS EXECUTED"]
 
 def triangleNumber(n):
     s = 0;

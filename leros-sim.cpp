@@ -163,6 +163,8 @@ public:
     std::cout << "ACC: " << m_acc << std::endl;
     std::cout << "ADDR: " << m_addr << std::endl;
     std::cout << "PC: " << m_pc << std::endl;
+    std::cout << "INSTRUCTIONS EXECUTED: " << m_instructionsExecuted
+              << std::endl;
   }
 
   void reset() {
@@ -175,6 +177,7 @@ public:
   }
 
   int clock() {
+    m_instructionsExecuted++;
     uint16_t instr = m_mem.read(m_pc) & 0xFFFF;
     if (m_pc > m_textSize) {
       return 1;
@@ -432,6 +435,7 @@ private:
   MVT m_addr = 0;
   MVT m_pc = 0;
   int m_textSize;
+  int m_instructionsExecuted = 0;
   ELFIO::elfio m_reader;
 
   LerosOptions m_options;
