@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.9)
 project (leros-sim)
-set (CMAKE_CXX_STANDARD 17)
+set (CMAKE_CXX_STANDARD 14)
 
 option(LEROS64 "Leros 64-bit simulator" OFF)
 

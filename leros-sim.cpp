@@ -158,8 +158,6 @@ public:
   int clock() {
     uint16_t instr = m_mem[m_pc] | m_mem[m_pc + 1] << 8;
     std::cout << "loaded instruction at PC: " << m_pc << std::endl;
-    if (m_pc == 74)
-      std::cout << "74!" << std::endl;
     if (m_pc > m_textSize) {
       return 1;
     } else {
@@ -384,7 +382,7 @@ private:
       break;
     }
     case LerosInstr::brn: {
-      if (m_pc < 0) {
+      if (m_acc < 0) {
         m_pc += simm11lsb0;
         return ALL_OK;
       }
