@@ -509,4 +509,6 @@ int main(int argc, char *argv[]) {
   // Show the state of the processor
   if (opt.printState)
     sim.printState();
+
+  return 0;
 }
