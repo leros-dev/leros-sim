@@ -1,5 +1,5 @@
-define dso_local i32 @_Z3fooi(i32)  {
-  %2 = icmp sgt i32 %0, 0
-  %3 = select i1 %2, i32 %0, i32 0
-  ret i32 %3
+define dso_local i32 @smallselect(i32, i32) {
+  %3 = icmp sgt i32 %0, %1
+  %4 = select i1 %3, i32 %0, i32 %1
+  ret i32 %4
 }
