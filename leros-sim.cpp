@@ -8,6 +8,7 @@
 
 #include "cxxopts/cxxopts.hpp"
 #include "elfio/elfio.hpp"
+#include "ripes/mainmemory.h"
 
 #ifdef LEROS64
 #define MVT uint64_t
@@ -130,7 +131,7 @@ public:
       char *buffer = new char[m_textSize];
       is.read(buffer, m_textSize);
       for (int i = 0; i < m_textSize; i++) {
-        m_mem[i] = buffer[i];
+        m_mem.write(i, buffer[i], 1);
       }
       delete[] buffer;
     } else {
@@ -174,7 +175,7 @@ public:
   }
 
   int clock() {
-    uint16_t instr = m_mem[m_pc] | m_mem[m_pc + 1] << 8;
+    uint16_t instr = m_mem.read(m_pc) & 0xFFFF;
     if (m_pc > m_textSize) {
       return 1;
     } else {
@@ -412,11 +413,11 @@ private:
       break;
     }
     case LerosInstr::loadind: {
-      m_acc = m_mem[m_addr + simm8];
+      m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8));
       break;
     }
     case LerosInstr::storeind: {
-      m_mem[m_addr + simm8] = m_acc;
+      m_mem.write((m_addr + simm8), m_acc, 4);
       break;
     }
     }
@@ -425,7 +426,7 @@ private:
   }
 
   std::set<unsigned> m_modifiedRegs;
-  std::map<MVT, uint8_t> m_mem;
+  MainMemoryTemplate<uint8_t, uint32_t> m_mem;
   std::array<MVT_S, 256> m_reg;
   MVT_S m_acc = 0;
   MVT m_addr = 0;
