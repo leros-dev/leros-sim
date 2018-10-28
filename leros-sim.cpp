@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <set>
 #include <stdint.h>
 
 #include "cxxopts/cxxopts.hpp"
@@ -105,7 +106,9 @@ inline void itoa(unsigned v, char *buf) {
 }
 
 struct LerosOptions {
+  std::map<unsigned, MVT_S> initRegState;
   std::string filename;
+  bool onlyShowModifiedRegs;
   bool exitOnJalRA;
   bool printState;
 };
@@ -118,6 +121,8 @@ public:
 
     if (!m_reader.load(opt.filename)) {
       std::ifstream is(opt.filename, std::ifstream::binary);
+      assert(is.is_open() && "Could not open input file");
+
       is.seekg(0, is.end);
       m_textSize = is.tellg();
       assert(m_textSize % 2 == 0 && "File must be 16-bit aligned");
@@ -133,11 +138,24 @@ public:
     }
 
     reset();
+
+    // Load register state
+    for (const auto &p : opt.initRegState) {
+      m_reg[p.first] = p.second;
+    }
+  }
+
+  bool isModified(unsigned reg) {
+    return m_modifiedRegs.find(reg) != m_modifiedRegs.end();
   }
 
   void printState() {
     // Print registers
-    for (int i = 0; i < 256; i++) {
+    for (unsigned i = 0; i < 256; i++) {
+      if (m_options.onlyShowModifiedRegs) {
+        if (!isModified(i))
+          continue;
+      }
       std::cout << i << ":" << m_reg[i] << " ";
     }
     std::cout << std::endl;
@@ -157,7 +175,6 @@ public:
 
   int clock() {
     uint16_t instr = m_mem[m_pc] | m_mem[m_pc + 1] << 8;
-    std::cout << "loaded instruction at PC: " << m_pc << std::endl;
     if (m_pc > m_textSize) {
       return 1;
     } else {
@@ -336,6 +353,7 @@ private:
     case LerosInstr::store: {
       if (!isImmediate) {
         m_reg[uImmRaw] = m_acc;
+        m_modifiedRegs.insert(uImmRaw);
       } else {
         assert("store does not work with and immediate operand?");
       }
@@ -353,6 +371,7 @@ private:
       if (uImmRaw == 0 & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
       m_reg[uImmRaw] = m_pc;
+      m_modifiedRegs.insert(uImmRaw);
       m_pc = m_acc;
       return ALL_OK;
     }
@@ -405,6 +424,7 @@ private:
     return ALL_OK;
   }
 
+  std::set<unsigned> m_modifiedRegs;
   std::map<MVT, uint8_t> m_mem;
   std::array<MVT_S, 256> m_reg;
   MVT_S m_acc = 0;
@@ -422,8 +442,33 @@ void setupOptions(cxxopts::Options &options) {
           ("f,file", "File name - Required", cxxopts::value<std::string>())
           ("je", "End simulation upon encountering jal ra", cxxopts::value<bool>()->default_value("false"))
           ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
+          ("osmr", "Only show modified registers in printout (implicitely enables --ps)", cxxopts::value<bool>()->default_value("false"))
+          ("rs", "Initial register staet, commaseparated list of format '0:2,4:10,...", cxxopts::value<std::string>()->default_value(""))
           ;
   // clang-format on
+}
+
+std::map<unsigned, MVT_S> parseInitRegState(const std::string &string) {
+  if (string.empty())
+    return std::map<unsigned, MVT_S>();
+
+  std::map<unsigned, MVT_S> state;
+  std::vector<std::string> pairs;
+  std::string tmp;
+  std::istringstream f(string);
+  while (std::getline(f, tmp, ',')) {
+    pairs.push_back(tmp);
+  }
+
+  // parse pairs
+  for (auto &p : pairs) {
+    size_t pos = p.find(':');
+    unsigned reg = std::stoul(p.substr(0, pos));
+    p.erase(0, pos + 1);
+    int value = std::stoi(p);
+    state[reg] = value;
+  }
+  return state;
 }
 
 int main(int argc, char *argv[]) {
@@ -445,6 +490,11 @@ int main(int argc, char *argv[]) {
     opt.filename = result["f"].as<std::string>();
     opt.exitOnJalRA = result["je"].as<bool>();
     opt.printState = result["ps"].as<bool>();
+    opt.onlyShowModifiedRegs = result["osmr"].as<bool>();
+    if (opt.onlyShowModifiedRegs) {
+      opt.printState = true;
+    }
+    opt.initRegState = parseInitRegState(result["rs"].as<std::string>());
   } catch (cxxopts::OptionException e) {
     std::cout << e.what() << std::endl;
     return 1;
