@@ -84,9 +84,9 @@ const std::map<std::string, LerosInstr> InstMap{
 #endif
     {"00110", LerosInstr::store},     {"001110", LerosInstr::out},
     {"000001", LerosInstr::in},       {"01000", LerosInstr::jal},
-    {"01001000", LerosInstr::br},     {"01001001", LerosInstr::brz},
-    {"01001010", LerosInstr::brnz},   {"01001011", LerosInstr::brp},
-    {"01001100", LerosInstr::brn},    {"01010", LerosInstr::ldaddr},
+    {"10000", LerosInstr::br},        {"10001", LerosInstr::brz},
+    {"10010", LerosInstr::brnz},      {"10011", LerosInstr::brp},
+    {"10100", LerosInstr::brn},       {"01010", LerosInstr::ldaddr},
     {"01100", LerosInstr::loadind},   {"01110", LerosInstr::storeind}};
 
 inline void itoa(unsigned v, char *buf) {
@@ -212,7 +212,8 @@ private:
     const bool isImmediate = instr & 0b100000000;
     const MVT_S imm = getImmediate(instr, isImmediate);
     const uint8_t uImmRaw = instr & 0xFF;
-    const int8_t sImmRaw = instr & 0xFF;
+    const int simm8 = signextend<int, 8>(instr);
+    const int simm11lsb0 = signextend<int, 11>(instr) << 1;
     const uint8_t upperInstr = (instr >> 8) & 0xFF;
     const LerosInstr inst = decodeInstr(upperInstr);
 
@@ -353,44 +354,52 @@ private:
     case LerosInstr::jal: {
       if (uImmRaw == 0 & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
-      m_reg[uImmRaw] = m_pc + ILEN;
+      m_reg[uImmRaw] = m_pc;
       m_pc = m_acc;
       return ALL_OK;
     }
     case LerosInstr::br: {
-      m_pc += sImmRaw * ILEN;
+      m_pc += simm11lsb0;
       return ALL_OK;
     }
     case LerosInstr::brz: {
-      if (m_acc == 0)
-        m_pc += sImmRaw * ILEN;
-      return ALL_OK;
+      if (m_acc == 0) {
+        m_pc += simm11lsb0;
+        return ALL_OK;
+      }
+      break;
     }
     case LerosInstr::brnz: {
-      if (m_acc != 0)
-        m_pc += sImmRaw * ILEN;
-      return ALL_OK;
+      if (m_acc != 0) {
+        m_pc += simm11lsb0;
+        return ALL_OK;
+      }
+      break;
     }
     case LerosInstr::brp: {
-      if (m_acc >= 0)
-        m_pc += sImmRaw * ILEN;
-      return ALL_OK;
+      if (m_acc >= 0) {
+        m_pc += simm11lsb0;
+        return ALL_OK;
+      }
+      break;
     }
     case LerosInstr::brn: {
-      if (m_pc < 0)
-        m_pc += sImmRaw * ILEN;
-      return ALL_OK;
+      if (m_pc < 0) {
+        m_pc += simm11lsb0;
+        return ALL_OK;
+      }
+      break;
     }
     case LerosInstr::ldaddr: {
       m_addr = m_reg[uImmRaw];
       break;
     }
     case LerosInstr::loadind: {
-      m_acc = m_mem[m_addr + sImmRaw];
+      m_acc = m_mem[m_addr + simm8];
       break;
     }
     case LerosInstr::storeind: {
-      m_mem[m_addr + sImmRaw] = m_acc;
+      m_mem[m_addr + simm8] = m_acc;
       break;
     }
     }
