@@ -174,6 +174,9 @@ public:
     m_acc = 0;
     m_addr = 0;
     m_pc = 0;
+
+    // Set the stack pointer to a default value
+    m_reg[1] = 0x7FFFFFF0;
   }
 
   int clock() {
