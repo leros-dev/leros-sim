@@ -2,6 +2,7 @@ import argparse
 import sys
 import subprocess
 import os
+from testfunctions import *
 
 
 class DriverOptions:
@@ -18,34 +19,6 @@ class testSpec:
 
 SPECIAL_REGISTERS = ["ACC", "ADDR", "PC", "INSTRUCTIONS EXECUTED"]
 
-# ------------ TEST FUNCTCIONS -------------------
-
-def triangleNumber(n):
-    s = 0;
-    for i in range(1, n+1):
-        s += i
-    return s;
-
-
-def arrayAddition(n):
-    A = [0] * n
-    B = [0] * n
-    C = [0] * n
-    s = 0
-
-    for i in range(0, n):
-        A[i] = i
-        B[i] = i - 1
-
-    for i in range(0, n):
-        C[i] = A[i] + B[i]
-
-    for i in range(0, n):
-        s += C[i]
-
-    return s
-
-# ------------------------------------------------
 
 class Driver:
 
@@ -101,6 +74,7 @@ class Driver:
         return registerStates
 
     def runTest(self, spec):
+        print("Testing: %s" % spec.testFile)
         for i in range(spec.rangeStart, spec.rangeEnd, spec.interval):
             inputRegState = {}
             outputRegState = {}
@@ -127,8 +101,6 @@ class Driver:
         if regstate.endswith(','):
             regstate = regstate[:-1]
 
-        print("Calling simulator with initial register state: %s" % regstate)
-
         # Run the test with the given options:
         try:
             output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" + regstate + "\" -f " + testNames["bin"]], shell=True))
@@ -144,10 +116,7 @@ class Driver:
             if output[expectedReg] != expectedRegState[expectedReg]:
                 discrepancy = True
                 print("FAIL: Discrepancy on register %d.  Expected: %d    Actual: %d" % (expectedReg, expectedRegState[expectedReg], output[expectedReg]))
-        if not discrepancy:
-            print("All registers are as expected")
 
-        print("")
         return
 
 

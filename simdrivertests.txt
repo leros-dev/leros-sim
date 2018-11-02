@@ -1,4 +1,7 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 triangleNumber;0;100;1;tests/ll/triangle.ll
+shl;0;10;1;tests/ll/shl.ll
+ashr;0;5;1;tests/ll/ashr.ll
+lshr;0;5;1;tests/ll/lshr.ll
 arrayAddition;0;100000;10;tests/ll/arrayaddition.ll
