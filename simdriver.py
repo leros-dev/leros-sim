@@ -115,7 +115,7 @@ class Driver:
         for expectedReg in expectedRegState:
             if output[expectedReg] != expectedRegState[expectedReg]:
                 discrepancy = True
-                print("FAIL: Discrepancy on register %d.  Expected: %d    Actual: %d" % (expectedReg, expectedRegState[expectedReg], output[expectedReg]))
+                print("FAIL (ARG: %d): Discrepancy on register %d.  Expected: %d    Actual: %d" % (inputRegState[expectedReg], expectedReg, expectedRegState[expectedReg], output[expectedReg]))
 
         return
 
