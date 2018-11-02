@@ -66,6 +66,8 @@ class Driver:
             for line in c:
                 # Tokenize and remove newlines
                 line = line.rstrip()
+                if line.startswith('#'):
+                    continue
                 tokens = line.split(';')
                 ts = testSpec()
                 ts.testFunctor = tokens[0]
