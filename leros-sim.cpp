@@ -429,7 +429,7 @@ private:
   }
 
   std::set<unsigned> m_modifiedRegs;
-  MainMemoryTemplate<uint8_t, uint32_t> m_mem;
+  MainMemoryTemplate<uint32_t, uint32_t> m_mem;
   std::array<MVT_S, 256> m_reg;
   MVT_S m_acc = 0;
   MVT m_addr = 0;
