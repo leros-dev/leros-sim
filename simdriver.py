@@ -26,6 +26,25 @@ def triangleNumber(n):
         s += i
     return s;
 
+
+def arrayAddition(n):
+    A = [0] * n
+    B = [0] * n
+    C = [0] * n
+    s = 0
+
+    for i in range(0, n):
+        A[i] = i
+        B[i] = i - 1
+
+    for i in range(0, n):
+        C[i] = A[i] + B[i]
+
+    for i in range(0, n):
+        s += C[i]
+
+    return s
+
 # ------------------------------------------------
 
 class Driver:
