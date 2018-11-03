@@ -106,6 +106,10 @@ class Driver:
             outputRegState[4] = self.parseHostOutput(testNames["exec"], i)
             self.executeSimulator(spec.testFile, inputRegState, outputRegState)
 
+        # Cleanup
+        os.remove(testNames["exec"])
+        os.remove(testNames["o"])
+        os.remove(testNames["bin"])
 
     def executeSimulator(self, testPath, inputRegState, expectedRegState):
         # Get regstate string
