@@ -2,6 +2,7 @@ import argparse
 import sys
 import subprocess
 import os
+from math import floor
 from testfunctions import *
 
 
@@ -14,6 +15,7 @@ class testSpec:
     testFunctor = ""
     argumentRanges = []
     testFile = ""
+    verbose=False
 
 SPECIAL_REGISTERS = ["ACC", "ADDR", "PC", "INSTRUCTIONS EXECUTED"]
 
@@ -28,6 +30,9 @@ class Driver:
         self.testnames = []
 
         for spec in self.testSpecs:
+            self.currentTestSpec = spec
+            self.iteration = 0
+            self.totalIterations = 1
             self.runTest(spec)
         return
 
@@ -45,9 +50,13 @@ class Driver:
                 ts.testFile = os.path.join(self.scriptPath, tokens[0])
                 i = 1
                 argumentRanges = []
-                while i < len(tokens):
+                # Parse the next packets in groups of 3
+                while floor(((len(tokens) - i) / 3)) > 0:
                     argumentRanges.append(range(int(tokens[i]), int(tokens[i+1]), int(tokens[i+2])))
                     i += 3
+                if i < len(tokens):
+                    # Parse the verbose argument
+                    ts.verbose=True
                 ts.argumentRanges = argumentRanges
                 testSpecs.append(ts)
         return testSpecs
@@ -104,16 +113,27 @@ class Driver:
                 self.recurseRunTest(ranges[1:], inputRegState, argumentIndex+ 1)
         else:
             # No more ranges to expand, do test
+            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % (self.totalIterations / 100)) == 0:
+                s = "Test %d:%d" % (self.iteration, self.totalIterations)
+                print(s)
+            self.iteration += 1
             outputRegState = {}
             outputRegState[4] = self.parseHostOutput(self.testNames["exec"], inputRegState)
             return self.executeSimulator(self.testNames["c"], inputRegState, outputRegState)
 
     def runTest(self, spec):
-        print("Testing: %s " % spec.testFile)
+        print("Testing: %s" % spec.testFile)
         self.testNames = self.getTestNames(spec.testFile)
         os.chdir(os.path.dirname(os.path.realpath(spec.testFile)))
 
         self.compileTestPrograms(spec)
+
+        # Calculate the number of iterations were going to be doing
+        for r in spec.argumentRanges:
+            iterRange = 0
+            for i in r:
+                iterRange += 1 # ewwww
+            self.totalIterations *= iterRange
 
         # Expand input arguments. We expect that the initial argument is given from register r4
         self.recurseRunTest(spec.argumentRanges, {}, 4)

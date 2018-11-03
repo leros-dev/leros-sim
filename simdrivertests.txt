@@ -1,7 +1,8 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 
-tests/c/bitswap.c;123456788;123456789;1;1;31;2;0;31;2;1;31;2
+# Mark bitswap as verbose because it is a very long test
+tests/c/bitswap.c;123456788;123456789;1;1;31;3;0;31;3;1;31;3;V
 
 tests/c/triangle.c;0;100;1
 tests/c/arrayaddition.c;0;1234;71
