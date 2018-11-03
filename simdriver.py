@@ -39,7 +39,7 @@ class Driver:
             for line in c:
                 # Tokenize and remove newlines
                 line = line.rstrip()
-                if line.startswith('#'):
+                if line.startswith('#') or line == "":
                     continue
                 tokens = line.split(';')
                 ts = testSpec()
@@ -93,18 +93,18 @@ class Driver:
         return int(output)
 
     def runTest(self, spec):
-        print("Testing: %s" % spec.testFile)
+        print("Testing: %s      Argument:(%d,%d,%d)" % (spec.testFile, spec.rangeStart, spec.rangeEnd, spec.interval))
         testNames = self.getTestNames(spec.testFile)
         os.chdir(os.path.dirname(os.path.realpath(spec.testFile)))
 
         self.compileTestPrograms(spec)
-
+        testState = False
         for i in range(spec.rangeStart, spec.rangeEnd, spec.interval):
             inputRegState = {}
             outputRegState = {}
             inputRegState[4] = i;
             outputRegState[4] = self.parseHostOutput(testNames["exec"], i)
-            self.executeSimulator(spec.testFile, inputRegState, outputRegState)
+            testState |= self.executeSimulator(spec.testFile, inputRegState, outputRegState)
 
         # Cleanup
         os.remove(testNames["exec"])
@@ -125,7 +125,7 @@ class Driver:
             output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" + regstate + "\" -f " + testNames["bin"]], shell=True))
         except subprocess.CalledProcessError as e:
             print(e.output)
-            return
+            return True
 
         # Parse simulator output
         output = self.parseSimulatorOutput(output)
@@ -137,7 +137,7 @@ class Driver:
                 discrepancy = True
                 print("FAIL (ARG: %d): Discrepancy on register %d.  Expected: %d    Actual: %d" % (inputRegState[expectedReg], expectedReg, expectedRegState[expectedReg], output[expectedReg]))
 
-        return
+        return discrepancy
 
 
 
