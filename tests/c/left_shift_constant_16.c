@@ -1,6 +1,7 @@
+#define ACNT1
 #include "testmacro.h"
 
 TEST_START{
-    int value = ARG << 16;
+    int value = ARG(0) << 16;
     TEST_END(value);
 }

@@ -9,10 +9,22 @@
         return 0;
 
 
-    #define ARG std::stoi(argv[1])
+    #define ARG(i) std::stoi(argv[i+1])
 
 #else   
-    #define TEST_START int test(int arg)
+    // Argument count for the Leros function. Should be defined before including this file!
+    #ifdef ACNT1
+        #define TEST_START int test(int a0)
+    #elif defined(ACNT2)
+        #define TEST_START int test(int a0, int a1)
+    #elif defined(ACNT3)
+        #define TEST_START int test(int a0, int a1, int a2)
+    #elif defined(ACNT4)
+        #define TEST_START int test(int a0, int a1, int a2, int a3)
+    #endif
+
     #define TEST_END(retval) return retval;
-    #define ARG arg
+
+    #define ARG(i) a##i
+
 #endif
