@@ -43,11 +43,10 @@ class Driver:
                     continue
                 tokens = line.split(';')
                 ts = testSpec()
-                ts.testFunctor = tokens[0]
+                ts.testFile = os.path.join(self.scriptPath, tokens[0])
                 ts.rangeStart = int(tokens[1])
                 ts.rangeEnd = int(tokens[2])
                 ts.interval = int(tokens[3])
-                ts.testFile = os.path.join(self.scriptPath, tokens[4])
                 testSpecs.append(ts)
         return testSpecs
 
@@ -55,9 +54,10 @@ class Driver:
     def getTestNames(self, file):
         filename = os.path.splitext(file)[0]
         nameMap = {}
-        nameMap["ll"] = file
+        nameMap["c"] = file
         nameMap["o"] = filename + ".o"
         nameMap["bin"] = filename + ".bin"
+        nameMap["exec"] = filename
         return nameMap
 
     def parseSimulatorOutput(self, outputString):
@@ -73,28 +73,43 @@ class Driver:
                 registerStates[int(p[0])] = int(p[1])
         return registerStates
 
+    def compileTestPrograms(self, spec):
+        # Get the names which will be generated
+        testNames = self.getTestNames(spec.testFile)
+
+        # Run compiler
+        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-c", testNames["c"]])
+
+        # Extract text segment
+        subprocess.call([os.path.join(self.options.llvmPath, "llvm-objcopy"), testNames["o"], "--dump-section",
+                         ".text=" + testNames["bin"]])
+
+        # Compile to host system with the -DLEROS_HOST_TEST flag using g++
+        subprocess.call(["g++", "-DLEROS_HOST_TEST", testNames["c"], "-o", testNames["exec"]])
+
+    def parseHostOutput(self, executable, arg):
+        a = str(arg)
+        output = subprocess.check_output("%s %d" % (executable, arg), shell=True)
+        return int(output)
+
     def runTest(self, spec):
         print("Testing: %s" % spec.testFile)
+        testNames = self.getTestNames(spec.testFile)
+        os.chdir(os.path.dirname(os.path.realpath(spec.testFile)))
+
+        self.compileTestPrograms(spec)
+
         for i in range(spec.rangeStart, spec.rangeEnd, spec.interval):
             inputRegState = {}
             outputRegState = {}
             inputRegState[4] = i;
-            outputRegState[4] = eval(spec.testFunctor + "(" + str(i) + ")")
-            self.execute(spec.testFile, inputRegState, outputRegState)
+            outputRegState[4] = self.parseHostOutput(testNames["exec"], i)
+            self.executeSimulator(spec.testFile, inputRegState, outputRegState)
 
 
-    def execute(self, testPath, inputRegState, expectedRegState):
-        os.chdir(os.path.dirname(os.path.realpath(testPath)))
-
-        testNames = self.getTestNames(testPath)
-
-        # Run compiler
-        subprocess.call([os.path.join(self.options.llvmPath, "llc"), "-march=leros32", testNames["ll"], "--filetype=obj"])
-
-        # Extract text segment
-        subprocess.call([os.path.join(self.options.llvmPath, "llvm-objcopy"), testNames["o"],  "--dump-section", ".text=" + testNames["bin"]])
-
+    def executeSimulator(self, testPath, inputRegState, expectedRegState):
         # Get regstate string
+        testNames = self.getTestNames(testPath)
         regstate = ""
         for reg in inputRegState:
             regstate += str(reg) + ":" + str(inputRegState[reg]) + ","
@@ -106,6 +121,7 @@ class Driver:
             output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" + regstate + "\" -f " + testNames["bin"]], shell=True))
         except subprocess.CalledProcessError as e:
             print(e.output)
+            return
 
         # Parse simulator output
         output = self.parseSimulatorOutput(output)
