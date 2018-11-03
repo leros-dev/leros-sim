@@ -143,6 +143,12 @@ class Driver:
         os.remove(self.testNames["o"])
         os.remove(self.testNames["bin"])
 
+    def regstateToString(self, regstate):
+        s = ""
+        for reg in regstate:
+            s += str(reg) + ":" + str(regstate[reg]) + ","
+        return s
+
     def executeSimulator(self, testPath, inputRegState, expectedRegState):
         # Get regstate string
         regstate = ""
@@ -167,7 +173,7 @@ class Driver:
         for expectedReg in expectedRegState:
             if output[expectedReg] != expectedRegState[expectedReg]:
                 discrepancy = True
-                print("FAIL (ARG: %d): Discrepancy on register %d.  Expected: %d    Actual: %d" % (inputRegState[expectedReg], expectedReg, expectedRegState[expectedReg], output[expectedReg]))
+                print("FAIL (ARG: %s):      In R:%d;  Expected: %d    Actual: %d" % (self.regstateToString(inputRegState), expectedReg, expectedRegState[expectedReg], output[expectedReg]))
 
         return discrepancy
 
