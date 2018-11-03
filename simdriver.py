@@ -12,7 +12,6 @@ class DriverOptions:
     testPath = ""
 
 class testSpec:
-    testFunctor = ""
     argumentRanges = []
     testFile = ""
     verbose=False
