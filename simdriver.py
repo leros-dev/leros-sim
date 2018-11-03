@@ -12,9 +12,7 @@ class DriverOptions:
 
 class testSpec:
     testFunctor = ""
-    rangeStart = 0;
-    rangeEnd = 0;
-    interval = 0;
+    argumentRanges = []
     testFile = ""
 
 SPECIAL_REGISTERS = ["ACC", "ADDR", "PC", "INSTRUCTIONS EXECUTED"]
@@ -27,6 +25,7 @@ class Driver:
         self.options = options
         self.scriptPath = os.path.dirname(os.path.realpath(__file__))
         self.testSpecs = self.parseTestFile(options.testFilePath)
+        self.testnames = []
 
         for spec in self.testSpecs:
             self.runTest(spec)
@@ -44,9 +43,12 @@ class Driver:
                 tokens = line.split(';')
                 ts = testSpec()
                 ts.testFile = os.path.join(self.scriptPath, tokens[0])
-                ts.rangeStart = int(tokens[1])
-                ts.rangeEnd = int(tokens[2])
-                ts.interval = int(tokens[3])
+                i = 1
+                argumentRanges = []
+                while i < len(tokens):
+                    argumentRanges.append(range(int(tokens[i]), int(tokens[i+1]), int(tokens[i+2])))
+                    i += 3
+                ts.argumentRanges = argumentRanges
                 testSpecs.append(ts)
         return testSpecs
 
@@ -87,33 +89,43 @@ class Driver:
         # Compile to host system with the -DLEROS_HOST_TEST flag using g++
         subprocess.call(["g++", "-DLEROS_HOST_TEST", testNames["c"], "-o", testNames["exec"]])
 
-    def parseHostOutput(self, executable, arg):
-        a = str(arg)
-        output = subprocess.check_output("%s %d" % (executable, arg), shell=True)
+    def parseHostOutput(self, executable, inputState):
+        argString = ""
+        for i in inputState:
+            argString += str(inputState[i]) + " "
+        output = subprocess.check_output("%s %s" % (executable, argString), shell=True)
         return int(output)
 
+    def recurseRunTest(self, ranges, inputRegState, argumentIndex):
+        if len(ranges) > 0:
+            # Expand range through recursion
+            for i in ranges[0]:
+                inputRegState[argumentIndex] = i
+                self.recurseRunTest(ranges[1:], inputRegState, argumentIndex+ 1)
+        else:
+            # No more ranges to expand, do test
+            outputRegState = {}
+            outputRegState[4] = self.parseHostOutput(self.testNames["exec"], inputRegState)
+            return self.executeSimulator(self.testNames["c"], inputRegState, outputRegState)
+
     def runTest(self, spec):
-        print("Testing: %s      Argument:(%d,%d,%d)" % (spec.testFile, spec.rangeStart, spec.rangeEnd, spec.interval))
-        testNames = self.getTestNames(spec.testFile)
+        print("Testing: %s " % spec.testFile)
+        self.testNames = self.getTestNames(spec.testFile)
         os.chdir(os.path.dirname(os.path.realpath(spec.testFile)))
 
         self.compileTestPrograms(spec)
-        testState = False
-        for i in range(spec.rangeStart, spec.rangeEnd, spec.interval):
-            inputRegState = {}
-            outputRegState = {}
-            inputRegState[4] = i;
-            outputRegState[4] = self.parseHostOutput(testNames["exec"], i)
-            testState |= self.executeSimulator(spec.testFile, inputRegState, outputRegState)
+
+        # Expand input arguments. We expect that the initial argument is given from register r4
+        self.recurseRunTest(spec.argumentRanges, {}, 4)
+
 
         # Cleanup
-        os.remove(testNames["exec"])
-        os.remove(testNames["o"])
-        os.remove(testNames["bin"])
+        os.remove(self.testNames["exec"])
+        os.remove(self.testNames["o"])
+        os.remove(self.testNames["bin"])
 
     def executeSimulator(self, testPath, inputRegState, expectedRegState):
         # Get regstate string
-        testNames = self.getTestNames(testPath)
         regstate = ""
         for reg in inputRegState:
             regstate += str(reg) + ":" + str(inputRegState[reg]) + ","
@@ -122,7 +134,8 @@ class Driver:
 
         # Run the test with the given options:
         try:
-            output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" + regstate + "\" -f " + testNames["bin"]], shell=True))
+            output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" +
+                                               regstate + "\" -f " + self.testNames["bin"]], shell=True))
         except subprocess.CalledProcessError as e:
             print(e.output)
             return True
