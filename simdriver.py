@@ -118,7 +118,7 @@ class Driver:
                 self.recurseRunTest(ranges[1:], inputRegState, argumentIndex+ 1)
         else:
             # No more ranges to expand, do test
-            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % floor(self.totalIterations / 100)) == 0:
+            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % 100) == 0:
                 s = "Test %d:%d" % (self.iteration, self.totalIterations)
                 print(s)
             self.iteration += 1
