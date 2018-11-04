@@ -272,31 +272,15 @@ private:
       break;
     }
     case LerosInstr::And: {
-      if (!isImmediate) {
-        m_acc &= imm;
-      } else {
-        // Only & the lower 8-bits
-        MVT rest = m_acc & 0xFFFFFF00;
-        m_acc &= 0xFF;
-        m_acc &= (imm & 0xFF);
-        m_acc |= rest;
-      }
+      m_acc &= imm;
       break;
     }
     case LerosInstr::Or: {
-      m_acc |= !isImmediate ? imm : imm & 0xFF;
+      m_acc |= imm;
       break;
     }
     case LerosInstr::Xor: {
-      if (!isImmediate) {
-        m_acc ^= imm;
-      } else {
-        // Only and the lower 8-bits
-        MVT rest = m_acc & 0xFFFFFF00;
-        m_acc &= 0xFF;
-        m_acc ^= (imm & 0xFF);
-        m_acc = rest | m_acc;
-      }
+      m_acc ^= imm;
       break;
     }
     case LerosInstr::loadh: {
