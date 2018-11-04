@@ -14,10 +14,5 @@ TEST_START{
     /* Put the xor bit back to their original positions */
     x = (x << ARG(1)) | (x << ARG(2)); 
     
-    /* XOR 'x' with the original number so that the 
-       two sets are swapped */
-    unsigned int result = ARG(0) ^ x;
-    
-    
-    TEST_END(result); 
+    TEST_END(x); 
 } 
