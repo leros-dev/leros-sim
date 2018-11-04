@@ -27,12 +27,18 @@ class Driver:
         self.scriptPath = os.path.dirname(os.path.realpath(__file__))
         self.testSpecs = self.parseTestFile(options.testFilePath)
         self.testnames = []
+        self.success = True
 
         for spec in self.testSpecs:
             self.currentTestSpec = spec
             self.iteration = 0
             self.totalIterations = 1
             self.runTest(spec)
+
+        if self.success:
+            print("All tests ran successfully")
+        else:
+            print("Some tests failed")
         return
 
     def parseTestFile(self, testFilepath):
@@ -112,13 +118,13 @@ class Driver:
                 self.recurseRunTest(ranges[1:], inputRegState, argumentIndex+ 1)
         else:
             # No more ranges to expand, do test
-            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % (self.totalIterations / 100)) == 0:
+            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % floor(self.totalIterations / 100)) == 0:
                 s = "Test %d:%d" % (self.iteration, self.totalIterations)
                 print(s)
             self.iteration += 1
             outputRegState = {}
             outputRegState[4] = self.parseHostOutput(self.testNames["exec"], inputRegState)
-            return self.executeSimulator(self.testNames["c"], inputRegState, outputRegState)
+            self.success &= not self.executeSimulator(self.testNames["c"], inputRegState, outputRegState)
 
     def runTest(self, spec):
         print("Testing: %s" % spec.testFile)
