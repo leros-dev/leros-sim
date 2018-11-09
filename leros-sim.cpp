@@ -27,7 +27,7 @@
 
 // Position in memory where we place input arguments, used for running main()
 // programs with integer arguments
-#define ARGV_START 0x8fffffff
+#define ARGV_START 0x8ffffff0
 
 enum class LerosInstr {
   nop,
@@ -221,7 +221,9 @@ public:
       std::string buf;
       int i = 0;
       while (getline(f, buf, ' ')) {
-        m_mem.write(ARGV_START + i * sizeof(int), atoi(buf.c_str()), 4);
+        auto argValue = static_cast<uint32_t>(atoi(buf.c_str()));
+        m_mem.write(ARGV_START + i * sizeof(int), argValue, 4);
+        i++;
       }
 
       // Set argc/argv
@@ -461,7 +463,9 @@ private:
       break;
     }
     case LerosInstr::loadind: {
-      m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8));
+      auto start = ARGV_START;
+      auto value = static_cast<MVT_S>(m_mem.read(m_addr + simm8));
+      m_acc = value;
       break;
     }
     case LerosInstr::storeind: {
