@@ -1,7 +1,7 @@
 #define ACNT3
 #include "testmacro.h"
 
-TEST_START{ 
+TEST_START 
     /* Move ARG(0)'th to rightmost side */
     unsigned int bit1 =  (ARG(0) >> ARG(1)) & 1; 
   
@@ -19,5 +19,4 @@ TEST_START{
     unsigned int result = ARG(0) ^ x;
     
     
-    TEST_END(result); 
-} 
+TEST_END(result) 
