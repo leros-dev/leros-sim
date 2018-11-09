@@ -1,9 +1,9 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 
-tests/c/bitinequality.c;-1764140133;-1764140133;-1;0;31;1;0;31;1
-tests/c/bitequality.c;-1764140133;-1764140133;-1;0;31;1;0;31;1
-tests/c/partialbitswap.c;-1764140133;-1764140133;-1;0;31;1;0;31;1
+tests/c/bitinequality.c;-1764140133;-1764140134;-1;0;31;1;0;31;1
+tests/c/bitequality.c;-1764140133;-1764140134;-1;0;31;1;0;31;1
+tests/c/partialbitswap.c;-1764140133;-1764140134;-1;0;31;1;0;31;1
 tests/c/triangle.c;0;123456;12345
 tests/c/arrayaddition.c;0;1234;71
 

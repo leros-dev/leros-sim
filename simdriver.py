@@ -76,6 +76,7 @@ class Driver:
         nameMap["o"] = filename + ".o"
         nameMap["bin"] = filename + ".bin"
         nameMap["exec"] = filename
+        nameMap["lerosExec"] = filename + "lerosExec"
         return nameMap
 
     def parseSimulatorOutput(self, outputString):
@@ -96,37 +97,30 @@ class Driver:
         testNames = self.getTestNames(spec.testFile)
 
         # Run compiler
-        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-c", testNames["c"]])
-
-        # Extract text segment
-        subprocess.call([os.path.join(self.options.llvmPath, "llvm-objcopy"), testNames["o"], "--dump-section",
-                         ".text=" + testNames["bin"]])
+        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", testNames["c"], "-o", testNames["lerosExec"]])
 
         # Compile to host system with the -DLEROS_HOST_TEST flag using g++
         subprocess.call(["g++", "-DLEROS_HOST_TEST", testNames["c"], "-o", testNames["exec"]])
 
-    def parseHostOutput(self, executable, inputState):
-        argString = ""
-        for i in inputState:
-            argString += str(inputState[i]) + " "
-        output = subprocess.check_output("%s %s" % (executable, argString), shell=True)
+    def parseHostOutput(self, executable, argv):
+        output = subprocess.check_output("%s %s" % (executable, argv), shell=True)
         return int(output)
 
-    def recurseRunTest(self, ranges, inputRegState, argumentIndex):
+    def recurseRunTest(self, ranges, argv):
         if len(ranges) > 0:
             # Expand range through recursion
             for i in ranges[0]:
-                inputRegState[argumentIndex] = i
-                self.recurseRunTest(ranges[1:], inputRegState, argumentIndex+ 1)
+                currentArgv =  argv + str(i) + " "
+                self.recurseRunTest(ranges[1:], currentArgv)
         else:
             # No more ranges to expand, do test
-            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % 100) == 0:
+            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % 10) == 0:
                 s = "Test %d:%d" % (self.iteration, self.totalIterations)
                 print(s)
             self.iteration += 1
             outputRegState = {}
-            outputRegState[4] = self.parseHostOutput(self.testNames["exec"], inputRegState)
-            self.success &= not self.executeSimulator(self.testNames["c"], inputRegState, outputRegState)
+            outputRegState[4] = self.parseHostOutput(self.testNames["exec"], argv)
+            self.success &= not self.executeSimulator(self.testNames["c"], argv, outputRegState)
 
     def runTest(self, spec):
         print("Testing: %s" % spec.testFile)
@@ -143,13 +137,12 @@ class Driver:
             self.totalIterations *= iterRange
 
         # Expand input arguments. We expect that the initial argument is given from register r4
-        self.recurseRunTest(spec.argumentRanges, {}, 4)
+        self.recurseRunTest(spec.argumentRanges, "")
 
 
         # Cleanup
         os.remove(self.testNames["exec"])
-        os.remove(self.testNames["o"])
-        os.remove(self.testNames["bin"])
+        os.remove(self.testNames["lerosExec"])
 
     def regstateToString(self, regstate):
         s = ""
@@ -157,18 +150,11 @@ class Driver:
             s += str(reg) + ":" + str(regstate[reg]) + ","
         return s
 
-    def executeSimulator(self, testPath, inputRegState, expectedRegState):
-        # Get regstate string
-        regstate = ""
-        for reg in inputRegState:
-            regstate += str(reg) + ":" + str(inputRegState[reg]) + ","
-        if regstate.endswith(','):
-            regstate = regstate[:-1]
-
+    def executeSimulator(self, testPath, argv, expectedRegState):
         # Run the test with the given options:
         try:
-            output = (subprocess.check_output([self.options.simExecutable + " --osmr --je --rs=\"" +
-                                               regstate + "\" -f " + self.testNames["bin"]], shell=True))
+            output = (subprocess.check_output([self.options.simExecutable + " --osmr --argv=\"" +
+                                               argv + "\" -f " + self.testNames["lerosExec"]], shell=True))
         except subprocess.CalledProcessError as e:
             print(e.output)
             return True
@@ -181,7 +167,7 @@ class Driver:
         for expectedReg in expectedRegState:
             if output[expectedReg] != expectedRegState[expectedReg]:
                 discrepancy = True
-                print("FAIL (ARG: %s):      In R:%d;  Expected: %d    Actual: %d" % (self.regstateToString(inputRegState), expectedReg, expectedRegState[expectedReg], output[expectedReg]))
+                print("FAIL (ARG: %s):      In R:%d;  Expected: %d    Actual: %d" % (argv, expectedReg, expectedRegState[expectedReg], output[expectedReg]))
 
         return discrepancy
 
