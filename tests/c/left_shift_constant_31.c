@@ -3,5 +3,4 @@
 
 TEST_START
     int value = ARG(0) << 31;
-    TEST_END(value)
-}
+TEST_END(value)
