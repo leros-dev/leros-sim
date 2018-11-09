@@ -53,10 +53,11 @@ enum class LerosInstr {
   ldaddr,
   loadind,
   storeind,
+  scall,
   unknown
 };
 
-enum SimRetval { ALL_OK, JAL_RA_EXIT, ERROR };
+enum SimRetval { ALL_OK, JAL_RA_EXIT, SCALL, ERROR };
 
 template <typename T, unsigned B> inline T signextend(const T x) {
   struct {
@@ -89,7 +90,8 @@ const std::map<std::string, LerosInstr> InstMap{
     {"10000", LerosInstr::br},        {"10001", LerosInstr::brz},
     {"10010", LerosInstr::brnz},      {"10011", LerosInstr::brp},
     {"10100", LerosInstr::brn},       {"01010", LerosInstr::ldaddr},
-    {"01100", LerosInstr::loadind},   {"01110", LerosInstr::storeind}};
+    {"01100", LerosInstr::loadind},   {"01110", LerosInstr::storeind},
+    {"11111111", LerosInstr::scall}};
 
 inline void itoa(unsigned v, char *buf) {
   switch (v) {
@@ -410,6 +412,9 @@ private:
       m_mem.write((m_addr + simm8), m_acc, 4);
       break;
     }
+    case LerosInstr::scall: {
+      return SCALL;
+    }
     }
     m_pc += ILEN;
     return ALL_OK;
@@ -494,8 +499,8 @@ int main(int argc, char *argv[]) {
 
   LerosSim sim(opt);
 
-  while (sim.clock() == 0) {
-    // Clock until return != 0
+  while (sim.clock() == SimRetval::ALL_OK) {
+    // Clock until return != ALL_OK
   }
 
   // Show the state of the processor
