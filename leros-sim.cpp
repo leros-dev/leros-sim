@@ -277,8 +277,10 @@ private:
 
     switch (inst) {
     default:
-    case LerosInstr::unknown:
+    case LerosInstr::unknown: {
       assert("Unknown instruction");
+      break;
+    }
     case LerosInstr::nop:
       break;
     case LerosInstr::add: {
@@ -516,7 +518,6 @@ int main(int argc, char *argv[]) {
   }
 
   std::string filename;
-  bool je, ps;
   try {
     auto result = options.parse(argc, argv);
     opt.filename = result["f"].as<std::string>();
