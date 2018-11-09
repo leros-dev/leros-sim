@@ -22,6 +22,9 @@
 
 #define ILEN 2 // instruction length in bytes
 
+// As defined in crt0.leros.c
+#define STACK_START 0x7fffffff
+
 enum class LerosInstr {
   nop,
   add,
@@ -119,10 +122,39 @@ struct LerosOptions {
 class LerosSim {
 public:
   LerosSim(const LerosOptions &opt) : m_options(opt) {
-    // Load file into main m_memory - has some overhead, but required if m_mem
-    // datastructure is a std::map
+    // PC entry position. Will be 0 for flat binary files, and set accordingly
+    // for ELF files, where relocations have been specified relative to the
+    // entry point
+    unsigned long entryPoint;
 
-    if (!m_reader.load(opt.filename)) {
+    if (m_reader.load(opt.filename)) {
+      // Load ELF file
+
+      entryPoint = m_reader.get_entry();
+
+      // Locate size of .text segment, to know how many instructions to extract.
+      const ELFIO::section *psec;
+      int i;
+      for (i = 0; i < m_reader.sections.size(); ++i) {
+        psec = m_reader.sections[i];
+        if (psec->get_name() == ".text") {
+          break;
+        }
+      }
+      if (i == m_reader.sections.size()) {
+        std::cout << "Could not locate .text segment in elf file" << std::endl;
+        exit(1);
+      }
+
+      m_textSize = psec->get_size();
+      const char *p = m_reader.sections[i]->get_data();
+      for (int i = entryPoint; i < entryPoint + m_textSize; i++) {
+        m_mem.write(i, *p, 1);
+        p++;
+      }
+    } else {
+      // Loading binary file
+      entryPoint = 0; // We always start at PC=0x0 for flat binary files
       std::ifstream is(opt.filename, std::ifstream::binary);
       assert(is.is_open() && "Could not open input file");
 
@@ -136,9 +168,9 @@ public:
         m_mem.write(i, buffer[i], 1);
       }
       delete[] buffer;
-    } else {
-      std::cout << "Loading .ELF file" << std::endl;
     }
+
+    m_entryPoint = entryPoint;
 
     reset();
 
@@ -175,7 +207,7 @@ public:
     }
     m_acc = 0;
     m_addr = 0;
-    m_pc = 0;
+    m_pc = m_entryPoint;
 
     // Set the stack pointer to a default value
     m_reg[1] = 0x7FFFFFF0;
@@ -184,10 +216,12 @@ public:
   int clock() {
     m_instructionsExecuted++;
     uint16_t instr = m_mem.read(m_pc) & 0xFFFF;
-    if (m_pc > m_textSize) {
-      return 1;
-    } else {
+
+    // Constrain simulator to only run instructions in the .text segment
+    if (m_pc >= m_entryPoint && m_pc <= m_entryPoint + m_textSize) {
       return execInstr(instr);
+    } else {
+      return 1;
     }
   }
 
@@ -363,7 +397,7 @@ private:
     case LerosInstr::jal: {
       if (uImmRaw == 0 & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
-      m_reg[uImmRaw] = m_pc;
+      m_reg[uImmRaw] = m_pc + ILEN; // Store PC + 2 bytes
       m_modifiedRegs.insert(uImmRaw);
       m_pc = m_acc;
       return ALL_OK;
@@ -426,6 +460,7 @@ private:
   MVT_S m_acc = 0;
   MVT m_addr = 0;
   MVT m_pc = 0;
+  MVT m_entryPoint;
   int m_textSize;
   int m_instructionsExecuted = 0;
   ELFIO::elfio m_reader;
