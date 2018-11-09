@@ -4,7 +4,7 @@ import subprocess
 import os
 from math import floor
 from testfunctions import *
-
+# --llp="~/Work/build-leros-llvm-Clang-Debug/bin" --sim="~/Work/build-leros-sim-Desktop_Qt_5_12_0_GCC_64bit-Debug/leros-sim" --test="~/Work/leros-sim/simdrivertests.txt"
 
 class DriverOptions:
     llvmPath = ""
@@ -28,15 +28,17 @@ class Driver:
         self.testSpecs = self.parseTestFile(options.testFilePath)
         self.testnames = []
         self.success = True
+        self.totalTestRuns = 0
 
         for spec in self.testSpecs:
             self.currentTestSpec = spec
             self.iteration = 0
             self.totalIterations = 1
             self.runTest(spec)
+            self.totalTestRuns += self.totalIterations
 
         if self.success:
-            print("All tests ran successfully")
+            print("All tests ran successfully. Executed %d tests" % self.totalTestRuns)
         else:
             print("Some tests failed")
         return
