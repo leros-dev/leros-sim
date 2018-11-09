@@ -25,6 +25,10 @@
 // As defined in crt0.leros.c
 #define STACK_START 0x7fffffff
 
+// Position in memory where we place input arguments, used for running main()
+// programs with integer arguments
+#define ARGV_START 0x8fffffff
+
 enum class LerosInstr {
   nop,
   add,
@@ -113,6 +117,7 @@ inline void itoa(unsigned v, char *buf) {
 
 struct LerosOptions {
   std::map<unsigned, MVT_S> initRegState;
+  std::string argv;
   std::string filename;
   bool onlyShowModifiedRegs;
   bool exitOnJalRA;
@@ -129,6 +134,7 @@ public:
 
     if (m_reader.load(opt.filename)) {
       // Load ELF file
+      m_isELF = true;
 
       entryPoint = m_reader.get_entry();
 
@@ -208,6 +214,20 @@ public:
     m_acc = 0;
     m_addr = 0;
     m_pc = m_entryPoint;
+
+    if (m_isELF) {
+      // Insert the input arguments into memory
+      std::istringstream f(m_options.argv);
+      std::string buf;
+      int i = 0;
+      while (getline(f, buf, ' ')) {
+        m_mem.write(ARGV_START + i * sizeof(int), atoi(buf.c_str()), 4);
+      }
+
+      // Set argc/argv
+      m_reg[4] = i;
+      m_reg[5] = ARGV_START;
+    }
 
     // Set the stack pointer to a default value
     m_reg[1] = 0x7FFFFFF0;
@@ -465,6 +485,7 @@ private:
   MVT m_entryPoint;
   int m_textSize;
   int m_instructionsExecuted = 0;
+  bool m_isELF = false;
   ELFIO::elfio m_reader;
 
   LerosOptions m_options;
@@ -478,6 +499,7 @@ void setupOptions(cxxopts::Options &options) {
           ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
           ("osmr", "Only show modified registers in printout (implicitely enables --ps)", cxxopts::value<bool>()->default_value("false"))
           ("rs", "Initial register staet, commaseparated list of format '0:2,4:10,...", cxxopts::value<std::string>()->default_value(""))
+          ("argv", "Input argument(s) specified as a string \"1 2 foo bar\"", cxxopts::value<std::string>()->default_value(""))
           ;
   // clang-format on
 }
@@ -528,6 +550,7 @@ int main(int argc, char *argv[]) {
       opt.printState = true;
     }
     opt.initRegState = parseInitRegState(result["rs"].as<std::string>());
+    opt.argv = result["argv"].as<std::string>();
   } catch (cxxopts::OptionException e) {
     std::cout << e.what() << std::endl;
     return 1;
