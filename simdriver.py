@@ -100,11 +100,11 @@ class Driver:
         subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", testNames["c"], "-o", testNames["lerosExec"]])
 
         # Compile to host system with the -DLEROS_HOST_TEST flag using g++
-        subprocess.call(["g++", "-DLEROS_HOST_TEST", testNames["c"], "-o", testNames["exec"]])
+        subprocess.call(["g++", "-DLEROS_HOST_TEST", "-std=c++11", testNames["c"], "-o", testNames["exec"]])
 
-    def parseHostOutput(self, executable, argv):
-        output = subprocess.check_output("%s %s" % (executable, argv), shell=True)
-        return int(output)
+    def runHost(self, executable, argv):
+        return subprocess.call("%s %s" % (executable, argv), shell=True)
+
 
     def recurseRunTest(self, ranges, argv):
         if len(ranges) > 0:
@@ -119,7 +119,8 @@ class Driver:
                 print(s)
             self.iteration += 1
             outputRegState = {}
-            outputRegState[4] = self.parseHostOutput(self.testNames["exec"], argv)
+	    # Get verification parameter by executing the host executable
+            outputRegState[4] = self.runHost(self.testNames["exec"], argv)
             self.success &= not self.executeSimulator(self.testNames["c"], argv, outputRegState)
 
     def runTest(self, spec):
