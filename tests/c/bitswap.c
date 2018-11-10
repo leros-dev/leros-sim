@@ -1,22 +1,25 @@
 #define ACNT3
 #include "testmacro.h"
 
-TEST_START 
-    /* Move ARG(0)'th to rightmost side */
-    unsigned int bit1 =  (ARG(0) >> ARG(1)) & 1; 
+int main(int argc, char** argv){
+    int a0 = ARG(0);
+    int a1 = ARG(1);
+    int a2 = ARG(2);  
+    /* Move a0'th to rightmost side */
+    unsigned int bit1 =  (a0) >> a1 & 1; 
   
-    /* Move ARG(2)'th to rightmost side */
-    unsigned int bit2 =  (ARG(0) >> ARG(2)) & 1; 
+    /* Move a2'th to rightmost side */
+    unsigned int bit2 =  (a0) >> a2 & 1; 
   
     /* XOR the two bits */
     unsigned int x = (bit1 ^ bit2); 
   
     /* Put the xor bit back to their original positions */
-    x = (x << ARG(1)) | (x << ARG(2)); 
+    x = (x << a1) | (x << a2);
     
     /* XOR 'x' with the original number so that the 
        two sets are swapped */
-    unsigned int result = ARG(0) ^ x;
+    unsigned int result = a0 ^ x;
     
-    
-TEST_END(result) 
+    return result;
+}

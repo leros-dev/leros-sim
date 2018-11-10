@@ -1,21 +1,23 @@
-#define ACNT1
+
 #include "testmacro.h"
 
-TEST_START
-    int A[ARG(0)];
-    int B[ARG(0)];
-    int C[ARG(0)];
+int main(int argc, char** argv){
+    int a0 = ARG(0); 
+    int A[a0];
+    int B[a0];
+    int C[a0];
     int s = 0;
-    for(int i = 0; i < ARG(0); i++){
+    for(int i = 0; i < a0; i++){
         A[i] = i;
         B[i] = i - 1;
     }
 
-    for(int i = 0; i < ARG(0); i++){
+    for(int i = 0; i < a0; i++){
         C[i] = A[i] + B[i];
     }
     
-    for(int i = 0; i < ARG(0); i++){
+    for(int i = 0; i < a0; i++){
         s += C[i];
     }
-TEST_END(s)
+    return s;
+}

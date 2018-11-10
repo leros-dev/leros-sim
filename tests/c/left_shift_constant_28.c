@@ -1,7 +1,8 @@
-#define ACNT1
+
 #include "testmacro.h"
 
-TEST_START
-    int value = ARG(0) << 28;
-TEST_END(value)
+int main(int argc, char** argv){
+    int a0 = ARG(0); 
+    int value = a0 << 28;
+return value;}
 

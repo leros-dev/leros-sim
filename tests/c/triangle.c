@@ -1,9 +1,10 @@
-#define ACNT1
+
 #include "testmacro.h"
 
-TEST_START
+int main(int argc, char** argv){
+    int a0 = ARG(0); 
     int s = 0;
-    for(int i = 1; i <= ARG(0); i++){
+    for(int i = 1; i <= a0; i++){
         s += i;
     }
-TEST_END(s)
+return s;}
