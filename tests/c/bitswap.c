@@ -21,5 +21,5 @@ int main(int argc, char** argv){
        two sets are swapped */
     unsigned int result = a0 ^ x;
     
-    return result;
+    TEST_RETURN(result);
 }

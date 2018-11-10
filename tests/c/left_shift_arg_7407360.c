@@ -4,5 +4,5 @@
 int main(int argc, char** argv){
     int a0 = ARG(0); 
     int value = 7407360 << a0;
-return value;}
+TEST_RETURN(value);}
 

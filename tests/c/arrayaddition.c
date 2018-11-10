@@ -19,5 +19,5 @@ int main(int argc, char** argv){
     for(int i = 0; i < a0; i++){
         s += C[i];
     }
-    return s;
+    TEST_RETURN(s);
 }

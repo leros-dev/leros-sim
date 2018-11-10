@@ -112,7 +112,8 @@ class Driver:
         subprocess.call(["g++", "-DLEROS_HOST_TEST", "-std=c++11", testNames["c"], "-o", testNames["exec"]])
 
     def runHost(self, executable, argv):
-        return subprocess.call("%s %s" % (executable, argv), shell=True)
+        output = subprocess.check_output("%s %s" % (executable, argv), shell=True)
+        return int(output)
 
 
     def recurseRunTest(self, ranges, argv):

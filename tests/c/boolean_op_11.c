@@ -9,4 +9,4 @@ int main(int argc, char** argv){
 	unsigned v2 = a1 | 0b11;
 	unsigned v3 = a2 ^ 0b11;
 	unsigned v4 = v1 + v2 + v3;
-return v4;}
+TEST_RETURN(v4);}

@@ -7,4 +7,4 @@ int main(int argc, char** argv){
     for(int i = 1; i <= a0; i++){
         s += i;
     }
-return s;}
+TEST_RETURN(s);}

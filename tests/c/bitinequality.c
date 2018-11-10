@@ -14,5 +14,5 @@ int main(int argc, char** argv){
     /* XOR the two bits */
     unsigned int x = (bit1 ^ bit2); 
 
-    return x;
+    TEST_RETURN(x);
 }

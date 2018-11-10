@@ -17,6 +17,6 @@ int main(int argc, char** argv){
     /* Put the xor bit back to their original positions */
     x = (x << a1) | (x << a2);
     
-    return x;
+    TEST_RETURN(x);
 }
  
