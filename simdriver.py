@@ -3,7 +3,6 @@ import sys
 import subprocess
 import os
 from math import floor
-from testfunctions import *
 # --llp="~/Work/build-leros-llvm-Clang-Debug/bin" --sim="~/Work/build-leros-sim-Desktop_Qt_5_12_0_GCC_64bit-Debug/leros-sim" --test="~/Work/leros-sim/simdrivertests.txt"
 
 class DriverOptions:
