@@ -1,8 +1,9 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 
-tests/c/simple_recursion.c;0;10;1
+tests/c/nested_calls.c;0;10;1
 
+tests/c/simple_recursion.c;0;10;1
 
 tests/c/stack_recursive_multiplication.c;0;12345;1234;0;3;1
 tests/c/stack_recursive_multiplication.c;0;-12345;-1234;0;100;1
