@@ -1,8 +1,8 @@
 #ifndef MAINMEMORY_H
 #define MAINMEMORY_H
 
+#include <map>
 #include <stdint.h>
-#include <unordered_map>
 
 // RVAccess struct - used for keeping track of read and write access to memory,
 // for displaying in GUI
@@ -15,7 +15,7 @@ typedef struct {
 } RVAccess;
 
 template <typename key_T, typename value_T>
-class MainMemoryTemplate : public std::unordered_map<key_T, value_T> {
+class MainMemoryTemplate : public std::map<key_T, value_T> {
 public:
   void write(uint32_t address, uint32_t value, int size) {
     // writes value to from the given address start, and up to $size bytes of
