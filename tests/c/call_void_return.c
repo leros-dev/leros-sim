@@ -1,8 +1,6 @@
 #include "testmacro.h"
 
 void foo() {
-  volatile int a;
-  a++;
   return;
 }
 

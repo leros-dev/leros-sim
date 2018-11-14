@@ -1,14 +1,25 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 
+tests/c/stack_recursive_multiplication.c;0;12345;1234;0;3;1
+tests/c/stack_recursive_multiplication.c;0;-12345;-1234;0;100;1
+tests/c/tail_recursive_multiplication.c;0;12345;1234;0;100;1
+tests/c/tail_recursive_multiplication.c;0;-12345;-1234;0;100;1
+
+tests/c/sign_extended_load.c;0;300;1
+tests/c/zero_extended_load.c;0;300;1
+tests/c/sign_extended_load.c;0;-300;-1
+tests/c/zero_extended_load.c;0;-300;-1
+
+tests/c/unsigned_char.c;0;300;1
+tests/c/signed_char.c;0;300;1
+tests/c/unsigned_char.c;0;300;1
+tests/c/signed_char.c;0;-300;-1
+tests/c/unsigned_char.c;0;-300;-1
+
 tests/c/call_void_return.c;0;1;1
 tests/c/call_int_return.c;0;1;1
 tests/c/call_struct_return.c;0;1;1
-
-tests/c/stack_recursive_multiplicaction.c;0;12345;1234;0;100;1
-tests/c/stack_recursive_multiplicaction.c;0;-12345;-1234;0;100;1
-tests/c/tail_recursive_multiplicaction.c;0;12345;1234;0;100;1
-tests/c/tail_recursive_multiplicaction.c;0;-12345;-1234;0;100;1
 
 
 tests/c/passthrough.c;0;256;1

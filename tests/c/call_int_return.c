@@ -1,7 +1,7 @@
 #include "testmacro.h"
 
 int foo() {
-  volatile int a;
+  volatile int a = 0;
   a++;
   return a;
 }
