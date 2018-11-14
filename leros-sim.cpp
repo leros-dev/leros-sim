@@ -58,8 +58,8 @@ enum class LerosInstr {
   brp,
   brn,
   ldaddr,
-  loadind,
-  storeind,
+  ldind,
+  stind,
   scall,
   unknown
 };
@@ -97,7 +97,7 @@ const std::map<std::string, LerosInstr> InstMap{
     {"10000", LerosInstr::br},        {"10001", LerosInstr::brz},
     {"10010", LerosInstr::brnz},      {"10011", LerosInstr::brp},
     {"10100", LerosInstr::brn},       {"01010", LerosInstr::ldaddr},
-    {"01100", LerosInstr::loadind},   {"01110", LerosInstr::storeind},
+    {"01100", LerosInstr::ldind},     {"01110", LerosInstr::stind},
     {"11111111", LerosInstr::scall}};
 
 inline void itoa(unsigned v, char *buf) {
@@ -462,13 +462,13 @@ private:
       m_addr = m_reg[uImmRaw];
       break;
     }
-    case LerosInstr::loadind: {
+    case LerosInstr::ldind: {
       auto start = ARGV_START;
       auto value = static_cast<MVT_S>(m_mem.read(m_addr + simm8));
       m_acc = value;
       break;
     }
-    case LerosInstr::storeind: {
+    case LerosInstr::stind: {
       m_mem.write((m_addr + simm8), m_acc, 4);
       break;
     }
