@@ -13,23 +13,29 @@ The purpose of the verification suite is to have a set of C language tests which
 
 Currently, `simdrivertests.txt` contains the current test suite, containing test cases for the tests in `tests/c/`.
 
+## Usage
+The test driver expects three arguments:
+* `--llp`: LLVM Path, path to the `bin/` folder of the Leros compiler tools, ie. `--llp ~/leros-clang/bin`
+* `--sim`: Path to executable of the Leros simulator (`leros-sim`), ie. `--sim ~/leros-sim/leros-sim`
+* `--test`: Path to the test suite specification file, ie. `--test ~/leros-sim/simdrivertests.txt`
+
+Given these input arguments, the script will begin execution of all tests located in the test suite specification file.
+
 ## Adding tests
-
-
-
 An example of a simple test could be:
 ```c++
-#define ACNT2
 #include "testmacro.h"
 
-TEST_START{
-    int result = ARG(0) + ARG(1);
-    TEST_END(result);
+int main(int argc, char** argv){
+    int a0 = ARG(0);
+    int a1 = ARG(1);
+    
+    int res = a0 + a1;
+
+    TEST_RETURN(res);
 }
 ```
 In defining a test, we utilize the following macros:
-* ACNT{N}: Defines the number of arguments which the test expects. This has an effect on the emitted code for `TEST_START` when compiling for Leros.
-* TEST_START: Depending on whether the compiler variable `LEROS_HOST_TEST` is set, either emits a `main` function for host tests, or a function which is not defined as being a `main` function, for Leros simulator execution. 
-* ARG(N): Fetches the input argument specified by N. On host, this is fetched from `argv` using `atoi`. On Leros tests, this references the actual argument parameter, ie. `arg2`. 
-* TEST_END(v): on Leros, emits `return v`. On host, a `printf("%d",v)` is emitted before the return (used by the `simdriver.py` script for fetching the return value), and returns 0.
+* ARG(N): Fetches the input argument specified by N. On host, this is fetched from `argv` using `atoi`. On Leros tests, we parse an argument string to the simulator, which the simulator translates to integers and inserts into its memory. `argv` is then reinterpreted as `(int*)argv` and we load the arguments through this pointer.
+* TEST_RETURN(res): on Leros, emits `return res`. On host, a `printf("%d",res)` is emitted before the return (used by the `simdriver.py` script for fetching the return value), and returns 0.
 For more information on the macros, refer to [`testmacro.h`](https://github.com/mortbopet/leros-sim/blob/master/tests/c/testmacro.h). 
