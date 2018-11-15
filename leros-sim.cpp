@@ -59,7 +59,9 @@ enum class LerosInstr {
   brn,
   ldaddr,
   ldind,
+  ldindbu,
   stind,
+  stindb,
   scall,
   unknown
 };
@@ -82,22 +84,23 @@ immediate/register selection away from instruction matching
 */
 const std::map<std::string, LerosInstr> InstMap{
     /*{"MSB-----LSB", LerosInstr}*/
-    {"00000", LerosInstr::nop},       {"000010", LerosInstr::add},
-    {"000011", LerosInstr::sub},      {"00010", LerosInstr::shr},
-    {"00011", LerosInstr::unused},    {"0010000", LerosInstr::load},
-    {"0010001", LerosInstr::And},     {"0010010", LerosInstr::Or},
-    {"0010011", LerosInstr::Xor},     {"0010100", LerosInstr::loadh},
-    {"0010101", LerosInstr::loadh2},  {"0010110", LerosInstr::loadh3},
+    {"00000", LerosInstr::nop},        {"000010", LerosInstr::add},
+    {"000011", LerosInstr::sub},       {"00010", LerosInstr::shr},
+    {"00011", LerosInstr::unused},     {"0010000", LerosInstr::load},
+    {"0010001", LerosInstr::And},      {"0010010", LerosInstr::Or},
+    {"0010011", LerosInstr::Xor},      {"0010100", LerosInstr::loadh},
+    {"0010101", LerosInstr::loadh2},   {"0010110", LerosInstr::loadh3},
 #ifdef LEROS64
-    {"NANANANA", LerosInstr::loadh4}, {"NANANANA", LerosInstr::loadh5},
-    {"NANANANA", LerosInstr::loadh6}, {"NANANANA", LerosInstr::loadh7},
+    {"NANANANA", LerosInstr::loadh4},  {"NANANANA", LerosInstr::loadh5},
+    {"NANANANA", LerosInstr::loadh6},  {"NANANANA", LerosInstr::loadh7},
 #endif
-    {"00110", LerosInstr::store},     {"001110", LerosInstr::out},
-    {"000001", LerosInstr::in},       {"01000", LerosInstr::jal},
-    {"10000", LerosInstr::br},        {"10001", LerosInstr::brz},
-    {"10010", LerosInstr::brnz},      {"10011", LerosInstr::brp},
-    {"10100", LerosInstr::brn},       {"01010", LerosInstr::ldaddr},
-    {"01100", LerosInstr::ldind},     {"01110", LerosInstr::stind},
+    {"00110", LerosInstr::store},      {"001110", LerosInstr::out},
+    {"000001", LerosInstr::in},        {"01000", LerosInstr::jal},
+    {"10000", LerosInstr::br},         {"10001", LerosInstr::brz},
+    {"10010", LerosInstr::brnz},       {"10011", LerosInstr::brp},
+    {"10100", LerosInstr::brn},        {"01010", LerosInstr::ldaddr},
+    {"01100", LerosInstr::ldind},      {"01110", LerosInstr::stind},
+    {"01100001", LerosInstr::ldindbu}, {"01110001", LerosInstr::stindb},
     {"11111111", LerosInstr::scall}};
 
 inline void itoa(unsigned v, char *buf) {
@@ -468,8 +471,18 @@ private:
       m_acc = value;
       break;
     }
+    case LerosInstr::ldindbu: {
+      auto start = ARGV_START;
+      auto value = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF;
+      m_acc = value;
+      break;
+    }
     case LerosInstr::stind: {
       m_mem.write((m_addr + simm8), m_acc, 4);
+      break;
+    }
+    case LerosInstr::stindb: {
+      m_mem.write((m_addr + simm8), m_acc & 0xFF, 1);
       break;
     }
     case LerosInstr::scall: {
