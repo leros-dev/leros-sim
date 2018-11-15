@@ -99,7 +99,7 @@ const std::map<std::string, LerosInstr> InstMap{
     {"10000", LerosInstr::br},         {"10001", LerosInstr::brz},
     {"10010", LerosInstr::brnz},       {"10011", LerosInstr::brp},
     {"10100", LerosInstr::brn},        {"01010", LerosInstr::ldaddr},
-    {"01100", LerosInstr::ldind},      {"01110", LerosInstr::stind},
+    {"01100000", LerosInstr::ldind},   {"01110000", LerosInstr::stind},
     {"01100001", LerosInstr::ldindbu}, {"01110001", LerosInstr::stindb},
     {"11111111", LerosInstr::scall}};
 
@@ -288,6 +288,11 @@ private:
       }
       i++;
     }
+
+    if (iMapCpy.size() == 1) {
+      return iMapCpy.begin()->second;
+    }
+
     return LerosInstr::unknown;
   }
 
