@@ -6,7 +6,7 @@ The `simdriver.py` python script is used for implementing a compiler- and simula
 The purpose of the verification suite is to have a set of C language tests which are executed on both the host system and the Leros simulator. Using the syntax described below, a single C source file can be specified, which will be compiled and run on both systems.
 
 <p align="center">
-  <img src="https://github.com/mortbopet/leros-sim/blob/master/resources/simdriver.png">
+  <img width=500px src="https://github.com/mortbopet/leros-sim/blob/master/resources/simdriver.png">
 </p>
 
 Currently, `simdrivertests.txt` contains the current test suite, containing test cases for the tests in `tests/c/`.
