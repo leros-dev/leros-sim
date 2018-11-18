@@ -5,8 +5,6 @@ Simulator and verification suite for the Leros ISA
 The `simdriver.py` python script is used for implementing a compiler- and simulator verification suite. 
 The purpose of the verification suite is to have a set of C language tests which are executed on both the host system and the Leros simulator. Using the syntax described below, a single C source file can be specified, which will be compiled and run on both systems.
 
-*todo*: write about the simdriver.py  
-
 <p align="center">
   <img src="https://github.com/mortbopet/leros-sim/blob/master/resources/simdriver.png">
 </p>
@@ -39,3 +37,6 @@ In defining a test, we utilize the following macros:
 * ARG(N): Fetches the input argument specified by N. On host, this is fetched from `argv` using `atoi`. On Leros tests, we parse an argument string to the simulator, which the simulator translates to integers and inserts into its memory. `argv` is then reinterpreted as `(int*)argv` and we load the arguments through this pointer.
 * TEST_RETURN(res): on Leros, emits `return res`. On host, a `printf("%d",res)` is emitted before the return (used by the `simdriver.py` script for fetching the return value), and returns 0.
 For more information on the macros, refer to [`testmacro.h`](https://github.com/mortbopet/leros-sim/blob/master/tests/c/testmacro.h). 
+
+## Todo
+* Do multithreaded testing
