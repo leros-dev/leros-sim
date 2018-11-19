@@ -105,7 +105,7 @@ class Driver:
         testNames = self.getTestNames(spec.testFile)
 
         # Run compiler
-        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", testNames["c"], "-o", testNames["lerosExec"]])
+        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-ffreestanding", testNames["c"], "-o", testNames["lerosExec"]])
 
         # Compile to host system with the -DLEROS_HOST_TEST flag using g++
         subprocess.call(["g++", "-DLEROS_HOST_TEST", "-std=c++11", testNames["c"], "-o", testNames["exec"]])
