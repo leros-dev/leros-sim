@@ -123,8 +123,8 @@ class Driver:
                 self.recurseRunTest(ranges[1:], currentArgv)
         else:
             # No more ranges to expand, do test
-            if self.currentTestSpec.verbose and self.iteration > 0 and (self.iteration % 10) == 0:
-                s = "Test %d:%d" % (self.iteration, self.totalIterations)
+            if self.currentTestSpec.verbose:
+                s = "Test %d:%d     argv: %s" % (self.iteration, self.totalIterations, argv)
                 print(s)
             self.iteration += 1
             outputRegState = {}
