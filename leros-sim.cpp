@@ -193,8 +193,12 @@ public:
     return m_modifiedRegs.find(reg) != m_modifiedRegs.end();
   }
 
+  void setModified(unsigned reg) { m_modifiedRegs.insert(reg); }
+
+  // Print registers
   void printState() {
-    // Print registers
+    // Always display R4 state
+    setModified(4);
     for (unsigned i = 0; i < 256; i++) {
       if (m_options.onlyShowModifiedRegs) {
         if (!isModified(i))
@@ -412,7 +416,7 @@ private:
     case LerosInstr::store: {
       if (!isImmediate) {
         m_reg[uImmRaw] = m_acc;
-        m_modifiedRegs.insert(uImmRaw);
+        setModified(uImmRaw);
       } else {
         assert("store does not work with and immediate operand?");
       }
@@ -430,7 +434,7 @@ private:
       if (uImmRaw == 0 & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
       m_reg[uImmRaw] = m_pc + ILEN; // Store PC + 2 bytes
-      m_modifiedRegs.insert(uImmRaw);
+      setModified(uImmRaw);
       m_pc = m_acc;
       return ALL_OK;
     }
