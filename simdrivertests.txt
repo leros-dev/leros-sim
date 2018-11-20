@@ -1,6 +1,37 @@
 # File format:
 # name of python test function; register a0 range start; register a0 range end; register a0 interval; test file path
 
+# Set instructions
+tests/c/signed_set_gt.c;-2;2;1;-2;2;1
+tests/c/signed_set_gte.c;-2;2;1;-2;2;1
+tests/c/signed_set_eq.c;-2;2;1;-2;2;1
+tests/c/signed_set_neq.c;-2;2;1;-2;2;1
+tests/c/signed_set_lt.c;-2;2;1;-2;2;1
+tests/c/signed_set_lte.c;-2;2;1;-2;2;1
+
+tests/c/unsigned_set_gt.c;-2;2;1;-2;2;1
+tests/c/unsigned_set_gte.c;-2;2;1;-2;2;1
+tests/c/unsigned_set_eq.c;-2;2;1;-2;2;1
+tests/c/unsigned_set_neq.c;-2;2;1;-2;2;1
+tests/c/unsigned_set_lt.c;-2;2;1;-2;2;1
+tests/c/unsigned_set_lte.c;-2;2;1;-2;2;1
+
+tests/c/unsigned_set_zero_gt.c;-2;2;1
+tests/c/unsigned_set_zero_gte.c;-2;2;1
+tests/c/unsigned_set_zero_eq.c;-2;2;1
+tests/c/unsigned_set_zero_neq.c;-2;2;1
+tests/c/unsigned_set_zero_lt.c;-2;2;1
+tests/c/unsigned_set_zero_lte.c;-2;2;1
+
+tests/c/signed_set_zero_gt.c;-2;2;1
+tests/c/signed_set_zero_gte.c;-2;2;1
+tests/c/signed_set_zero_eq.c;-2;2;1
+tests/c/signed_set_zero_neq.c;-2;2;1
+tests/c/signed_set_zero_lt.c;-2;2;1
+tests/c/signed_set_zero_lte.c;-2;2;1
+
+
+
 tests/c/char_bit_size.c;0;1;1
 
 tests/c/mul_runtime.c;0;12346;123;234567;2345678;234567
