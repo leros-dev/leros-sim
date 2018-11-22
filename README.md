@@ -12,7 +12,12 @@ The purpose of the verification suite is to have a set of C language tests which
 Currently, `simdrivertests.txt` contains the current test suite, containing test cases for the tests in `tests/c/`.
 
 ## Usage
-The test driver expects three arguments:
+Initially, the `leros-sim` must be built. The simulator is capable of running either leros .object files which contains an entry point (`_start`) routine, or flat binary files. Currently, the object file support only loads the .text segment, and thus, programs containing static data or other segments will not be loaded correctly.
+Execute `build.sh` in the `leros-sim` repository to build the simulator.  
+Next, the Leros compiler must be available - check out https://github.com/leros-dev/leros-llvm and build it using the `build.sh` script in the root folder of the repository.  
+
+
+To run all of the tests specified in the `simdrivertests.txt` file, execute the `simdriver.py`. The script expects three arguments:
 * `--llp`: LLVM Path, path to the `bin/` folder of the Leros compiler tools, ie. `--llp ~/leros-clang/bin`
 * `--sim`: Path to executable of the Leros simulator (`leros-sim`), ie. `--sim ~/leros-sim/leros-sim`
 * `--test`: Path to the test suite specification file, ie. `--test ~/leros-sim/simdrivertests.txt`
