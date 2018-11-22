@@ -17,7 +17,8 @@ The test driver expects three arguments:
 * `--sim`: Path to executable of the Leros simulator (`leros-sim`), ie. `--sim ~/leros-sim/leros-sim`
 * `--test`: Path to the test suite specification file, ie. `--test ~/leros-sim/simdrivertests.txt`
 
-Given these input arguments, the script will begin execution of all tests located in the test suite specification file.
+Given these input arguments, the script will begin execution of all tests located in the test suite specification file:  
+`python simdriver.py --llp="..." --sim="..." --test="..."`
 
 ## Adding tests
 An example of a simple test could be:
