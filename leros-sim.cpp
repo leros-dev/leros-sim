@@ -495,7 +495,17 @@ private:
       break;
     }
     case LerosInstr::scall: {
-      return SCALL;
+      switch (imm) {
+      default:
+      case 0:
+        return SCALL;
+      case 1:
+        m_reg[4] = m_instructionsExecuted;
+        break;
+      case 2:
+        std::cout << static_cast<char>(m_acc);
+        break;
+      }
     }
     }
     m_pc += ILEN;
