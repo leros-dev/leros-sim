@@ -141,25 +141,20 @@ public:
 
       entryPoint = m_reader.get_entry();
 
-      // Locate size of .text segment, to know how many instructions to extract.
-      const ELFIO::section *psec;
-      int i;
-      for (i = 0; i < m_reader.sections.size(); ++i) {
-        psec = m_reader.sections[i];
-        if (psec->get_name() == ".text") {
-          break;
-        }
-      }
-      if (i == m_reader.sections.size()) {
-        std::cout << "Could not locate .text segment in elf file" << std::endl;
-        exit(1);
-      }
+      for (const ELFIO::section *section : m_reader.sections) {
+        const auto sectionStart = section->get_address();
+        const auto sectionEnd = sectionStart + section->get_size();
+        if (sectionStart != 0) {
+          if (section->get_name() == ".text") {
+            m_textSize = section->get_size();
+          }
 
-      m_textSize = psec->get_size();
-      const char *p = m_reader.sections[i]->get_data();
-      for (int i = entryPoint; i < entryPoint + m_textSize; i++) {
-        m_mem.write(i, *p, 1);
-        p++;
+          const char *p = section->get_data();
+          for (int i = sectionStart; i < sectionEnd; i++) {
+            m_mem.write(i, *p, 1);
+            p++;
+          }
+        }
       }
     } else {
       // Loading binary file
