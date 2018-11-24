@@ -29,9 +29,6 @@ class Driver:
         self.success = True
         self.totalTestRuns = 0
 
-        # Fetch the latest crt0
-        self.getLeroscrt0()
-
         for spec in self.testSpecs:
             self.currentTestSpec = spec
             self.iteration = 0
@@ -45,11 +42,6 @@ class Driver:
             print("Some tests failed")
         return
 
-    def getLeroscrt0(self):
-        os.chdir(os.path.join(self.scriptPath, "tests", "c"))
-        # Fetch latest precompiled version of crt0.leros.o
-        subprocess.check_output(["wget", "-O", "crt0.leros.o", "https://github.com/leros-dev/leros-lib/blob/master/runtime/crt0.leros.o?raw=true"])
-        os.chdir(self.scriptPath)
 
     def parseTestFile(self, testFilepath):
         testSpecs = []
