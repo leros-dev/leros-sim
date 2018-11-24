@@ -93,9 +93,9 @@ const std::map<std::string, LerosInstr> InstMap{
 #endif
     {"00110", LerosInstr::store},      {"001110", LerosInstr::out},
     {"000001", LerosInstr::in},        {"01000", LerosInstr::jal},
-    {"10000", LerosInstr::br},         {"10001", LerosInstr::brz},
-    {"10010", LerosInstr::brnz},       {"10011", LerosInstr::brp},
-    {"10100", LerosInstr::brn},        {"01010", LerosInstr::ldaddr},
+    {"1000", LerosInstr::br},          {"1001", LerosInstr::brz},
+    {"1010", LerosInstr::brnz},        {"1011", LerosInstr::brp},
+    {"1100", LerosInstr::brn},         {"01010", LerosInstr::ldaddr},
     {"01100000", LerosInstr::ldind},   {"01110000", LerosInstr::stind},
     {"01100001", LerosInstr::ldindbu}, {"01110001", LerosInstr::stindb},
     {"11111111", LerosInstr::scall}};
@@ -297,7 +297,7 @@ private:
     const MVT_S imm = getImmediate(instr, isImmediate);
     const uint8_t uImmRaw = instr & 0xFF;
     const int simm8 = signextend<int, 8>(instr);
-    const int simm11lsb0 = signextend<int, 11>(instr) << 1;
+    const int simm13lsb0 = signextend<int, 13>(instr << 1);
     const uint8_t upperInstr = (instr >> 8) & 0xFF;
     const LerosInstr inst = decodeInstr(upperInstr);
 
@@ -424,33 +424,33 @@ private:
       return ALL_OK;
     }
     case LerosInstr::br: {
-      m_pc += simm11lsb0;
+      m_pc += simm13lsb0;
       return ALL_OK;
     }
     case LerosInstr::brz: {
       if (m_acc == 0) {
-        m_pc += simm11lsb0;
+        m_pc += simm13lsb0;
         return ALL_OK;
       }
       break;
     }
     case LerosInstr::brnz: {
       if (m_acc != 0) {
-        m_pc += simm11lsb0;
+        m_pc += simm13lsb0;
         return ALL_OK;
       }
       break;
     }
     case LerosInstr::brp: {
       if (m_acc >= 0) {
-        m_pc += simm11lsb0;
+        m_pc += simm13lsb0;
         return ALL_OK;
       }
       break;
     }
     case LerosInstr::brn: {
       if (m_acc < 0) {
-        m_pc += simm11lsb0;
+        m_pc += simm13lsb0;
         return ALL_OK;
       }
       break;
