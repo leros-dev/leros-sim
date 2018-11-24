@@ -22,9 +22,6 @@
 
 #define ILEN 2 // instruction length in bytes
 
-// As defined in crt0.leros.c
-#define STACK_START 0x7fffffff
-
 // Position in memory where we place input arguments, used for running main()
 // programs with integer arguments
 #define ARGV_START 0x8ffffff0
