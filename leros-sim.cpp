@@ -318,7 +318,13 @@ private:
       break;
     }
     case LerosInstr::shr: {
+#ifdef LEROS64
+      MVT mask = 0x7FFFFFFFFFFFFFFF;
+#else
+      MVT mask = 0x7FFFFFFF;
+#endif
       m_acc >>= 1;
+      m_acc &= mask;
       break;
     }
     case LerosInstr::unused: {
