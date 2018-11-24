@@ -14,7 +14,7 @@ tests/c/unsigned_mul_runtime.c;0;1234;123;234567;2345678;234567
 
 tests/c/unsigned_mod_runtime.c;0;1234;123;234567;2345678;234567
 tests/c/mod_runtime.c;0;1234;123;234567;2345678;234567
-tests/c/mod_runtime.c;0;-1234;-123;0;-2345;-234
+tests/c/mod_runtime.c;0;-1234;-123;-1;-2345;-234
 
 
 tests/c/nested_calls.c;0;10;1
