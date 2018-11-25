@@ -147,9 +147,11 @@ public:
           }
 
           const char *p = section->get_data();
-          for (int i = sectionStart; i < sectionEnd; i++) {
-            m_mem.write(i, *p, 1);
-            p++;
+          if (p) {
+            for (int i = sectionStart; i < sectionEnd; i++) {
+              m_mem.write(i, *p, 1);
+              p++;
+            }
           }
         }
       }
@@ -422,6 +424,9 @@ private:
       break;
     }
     case LerosInstr::jal: {
+      if (m_acc > m_entryPoint + m_textSize) {
+        assert("Executing code outside of .text segment");
+      }
       if (uImmRaw == 0 & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
       m_reg[uImmRaw] = m_pc + ILEN; // Store PC + 2 bytes
@@ -495,6 +500,7 @@ private:
         break;
       case 2:
         std::cout << static_cast<char>(m_acc);
+        std::cout.flush();
         break;
       }
     }
