@@ -4,6 +4,9 @@
 
 tests/c/char_bit_size.c;0;1;1
 
+tests/c/va_args_max.c;0;1;1
+tests/c/va_args_sum.c;0;1;1
+
 tests/c/div_runtime.c;123456;1234567;123456;1;12345;1234
 tests/c/div_runtime.c;-123456;-1234567;-123456;1;12345;1234
 tests/c/unsigned_div_runtime.c;123456;1234567;123456;-1;-12345;-1234
