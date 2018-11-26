@@ -242,6 +242,9 @@ public:
 
     // Constrain simulator to only run instructions in the .text segment
     if (m_pc >= m_entryPoint && m_pc <= m_entryPoint + m_textSize) {
+      m_trace.insert(m_trace.begin(), m_pc);
+      if (m_trace.size() > m_traceSize)
+        m_trace.pop_back();
       return execInstr(instr);
     } else {
       return 1;
@@ -471,8 +474,8 @@ private:
       break;
     }
     case LerosInstr::ldind: {
-      auto start = ARGV_START;
-      auto value = static_cast<MVT_S>(m_mem.read(m_addr + simm8));
+      const auto addr = m_addr + simm8;
+      const auto value = static_cast<MVT_S>(m_mem.read(addr));
       m_acc = value;
       break;
     }
@@ -512,6 +515,9 @@ private:
   std::set<unsigned> m_modifiedRegs;
   MainMemoryTemplate<uint32_t, uint32_t> m_mem;
   std::array<MVT_S, 256> m_reg;
+  std::vector<uint32_t> m_trace;
+  const int m_traceSize =
+      100; // record the 100 most recent PC's during execution
   MVT_S m_acc = 0;
   MVT m_addr = 0;
   MVT m_pc = 0;
