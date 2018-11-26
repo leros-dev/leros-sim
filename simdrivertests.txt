@@ -4,6 +4,21 @@
 
 tests/c/char_bit_size.c;0;1;1
 
+tests/c/char_arrayaddition.c;0;1234;71
+tests/c/char_arrayaddition_ptr.c;0;1234;71
+tests/c/unsigned_char_arrayaddition.c;0;1234;71
+tests/c/unsigned_char_arrayaddition_ptr.c;0;1234;71
+
+tests/c/short_arrayaddition.c;0;1234;71
+tests/c/short_arrayaddition_ptr.c;0;1234;71
+tests/c/unsigned_short_arrayaddition.c;0;1234;71
+tests/c/unsigned_short_arrayaddition_ptr.c;0;1234;71
+
+tests/c/short_binops.c;0;12345678;1234567;0;12345678;1234567;0;12345678;1234567
+tests/c/unsigned_short_binops.c;0;12345678;1234567;0;12345678;1234567;0;12345678;1234567
+tests/c/char_binops.c;0;12345678;1234567;0;12345678;1234567;0;12345678;1234567
+tests/c/unsigned_char_binops.c;0;12345678;1234567;0;12345678;1234567;0;12345678;1234567
+
 tests/c/va_args_max.c;0;1;1
 tests/c/va_args_sum.c;0;1;1
 
