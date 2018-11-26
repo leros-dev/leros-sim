@@ -29,21 +29,26 @@
 enum class LerosInstr {
   nop,
   add,
+  addi,
   sub,
+  subi,
   shr,
-  unused,
   load,
+  loadi,
   And,
+  Andi,
   Or,
+  Ori,
   Xor,
-  loadh,
-  loadh2,
-  loadh3,
+  Xori,
+  loadhi,
+  loadh2i,
+  loadh3i,
 #ifdef LEROS64
-  loadh4,
-  loadh5,
-  loadh6,
-  loadh7,
+  loadh4i,
+  loadh5i,
+  loadh6i,
+  loadh7i,
 #endif
   store,
   out,
@@ -71,34 +76,6 @@ template <typename T, unsigned B> inline T signextend(const T x) {
   } s;
   return s.x = x;
 }
-
-/**
-pattern match the instruction going from MSB->LSB. This is done to be
-able to easily add more instructions later on, while not defining what a
-'-' (unspecified) bit has to be, without breaking the patterns.
-Another benefit of this is, that we can separate the logic for
-immediate/register selection away from instruction matching
-*/
-const std::map<std::string, LerosInstr> InstMap{
-    /*{"MSB-----LSB", LerosInstr}*/
-    {"00000", LerosInstr::nop},        {"000010", LerosInstr::add},
-    {"000011", LerosInstr::sub},       {"00010", LerosInstr::shr},
-    {"00011", LerosInstr::unused},     {"0010000", LerosInstr::load},
-    {"0010001", LerosInstr::And},      {"0010010", LerosInstr::Or},
-    {"0010011", LerosInstr::Xor},      {"0010100", LerosInstr::loadh},
-    {"0010101", LerosInstr::loadh2},   {"0010110", LerosInstr::loadh3},
-#ifdef LEROS64
-    {"NANANANA", LerosInstr::loadh4},  {"NANANANA", LerosInstr::loadh5},
-    {"NANANANA", LerosInstr::loadh6},  {"NANANANA", LerosInstr::loadh7},
-#endif
-    {"00110", LerosInstr::store},      {"001110", LerosInstr::out},
-    {"000001", LerosInstr::in},        {"01000", LerosInstr::jal},
-    {"1000", LerosInstr::br},          {"1001", LerosInstr::brz},
-    {"1010", LerosInstr::brnz},        {"1011", LerosInstr::brp},
-    {"1100", LerosInstr::brn},         {"01010", LerosInstr::ldaddr},
-    {"01100000", LerosInstr::ldind},   {"01110000", LerosInstr::stind},
-    {"01100001", LerosInstr::ldindbu}, {"01110001", LerosInstr::stindb},
-    {"11111111", LerosInstr::scall}};
 
 inline void itoa(unsigned v, char *buf) {
   switch (v) {
@@ -252,76 +229,69 @@ public:
   }
 
 private:
-  MVT_S getImmediate(uint16_t instr, bool isImmediate) {
-    if (!isImmediate) {
-      return m_reg.at(instr & 0xFF);
-    } else {
-      return signextend<MVT_S, 8>(instr & 0xFF);
-    }
-  }
-
   LerosInstr decodeInstr(uint8_t opcode) {
-    char buffer[8];
-    for (int i = 7; i >= 0; i--) {
-      auto bufPtr = buffer + (7 - i);
-      itoa((opcode >> i) & 0b1, bufPtr);
-    }
-    auto iMapCpy = InstMap;
+    const uint8_t bOpcode = opcode >> 4;
 
-    int i = 0;
-
-    while (i < 8) {
-      // Reverse iterate to allow deletion
-      for (auto iter = iMapCpy.begin(); iter != iMapCpy.end();) {
-        if (iMapCpy.size() == 1) {
-          // Found end-of-string of a potential match instruction - ie.
-          // instruction matched, or only one instruction match candidate
-          // remains in map
-          return iter->second;
-        }
-
-        if (iter->first[i] != buffer[i]) {
-          // Could not match instruction, remove from map
-          iMapCpy.erase(iter++);
-        } else {
-          iter++;
-        }
-      }
-      i++;
+    // clang-format off
+    switch (bOpcode) {
+    default: break;
+    case 0b1000: return LerosInstr::br;
+    case 0b1001: return LerosInstr::brz;
+    case 0b1010: return LerosInstr::brnz;
+    case 0b1011: return LerosInstr::brp;
+    case 0b1100: return LerosInstr::brn;
     }
 
-    if (iMapCpy.size() == 1) {
-      return iMapCpy.begin()->second;
+    switch(opcode){
+    default: assert(false && "Could not match opcode");
+    case 0x0: return LerosInstr::nop;
+    case 0x08: return LerosInstr::add;
+    case 0x09: return LerosInstr::addi;
+    case 0x0c: return LerosInstr::sub;
+    case 0x0d: return LerosInstr::subi;
+    case 0x10: return LerosInstr::shr;
+    case 0x20: return LerosInstr::load;
+    case 0x21: return LerosInstr::loadi;
+    case 0x22: return LerosInstr::And;
+    case 0x23: return LerosInstr::Andi;
+    case 0x24: return LerosInstr::Or;
+    case 0x25: return LerosInstr::Ori;
+    case 0x26: return LerosInstr::Xor;
+    case 0x27: return LerosInstr::Xori;
+    case 0x29: return LerosInstr::loadhi;
+    case 0x2a: return LerosInstr::loadh2i;
+    case 0x2b: return LerosInstr::loadh3i;
+    case 0x30: return LerosInstr::store;
+    case 0x39: return LerosInstr::out;
+    case 0x05: return LerosInstr::in;
+    case 0x40: return LerosInstr::jal;
+    case 0x50: return LerosInstr::ldaddr;
+    case 0x60: return LerosInstr::ldind;
+    case 0x61: return LerosInstr::ldindbu;
+    case 0x70: return LerosInstr::stind;
+    case 0x71: return LerosInstr::stindb;
+    case 0xff: return LerosInstr::scall;
     }
+    // clang-format on
 
     return LerosInstr::unknown;
   }
 
   int execInstr(uint16_t instr) {
-    const bool isImmediate = instr & 0b100000000;
-    const MVT_S imm = getImmediate(instr, isImmediate);
-    const uint8_t uImmRaw = instr & 0xFF;
+    const uint8_t uimm8 = instr & 0xFF;
     const int simm8 = signextend<int, 8>(instr);
     const int simm13lsb0 = signextend<int, 13>(instr << 1);
-    const uint8_t upperInstr = (instr >> 8) & 0xFF;
-    const LerosInstr inst = decodeInstr(upperInstr);
+    const LerosInstr inst = decodeInstr((instr >> 8) & 0xFF);
 
+    // clang-format off
     switch (inst) {
     default:
-    case LerosInstr::unknown: {
-      assert("Unknown instruction");
-      break;
-    }
-    case LerosInstr::nop:
-      break;
-    case LerosInstr::add: {
-      m_acc += imm;
-      break;
-    }
-    case LerosInstr::sub: {
-      m_acc -= imm;
-      break;
-    }
+    case LerosInstr::unknown: assert("Unknown instruction"); break;
+    case LerosInstr::nop: break;
+    case LerosInstr::addi: m_acc += simm8; break;
+    case LerosInstr::add:  m_acc += m_reg[uimm8]; break;
+    case LerosInstr::subi: m_acc -= simm8; break;
+    case LerosInstr::sub:  m_acc -= m_reg[uimm8]; break;
     case LerosInstr::shr: {
 #ifdef LEROS64
       MVT mask = 0x7FFFFFFFFFFFFFFF;
@@ -332,115 +302,42 @@ private:
       m_acc &= mask;
       break;
     }
-    case LerosInstr::unused: {
-      break;
-    }
-    case LerosInstr::load: {
-      m_acc = imm;
-      break;
-    }
-    case LerosInstr::And: {
-      m_acc &= imm;
-      break;
-    }
-    case LerosInstr::Or: {
-      m_acc |= imm;
-      break;
-    }
-    case LerosInstr::Xor: {
-      m_acc ^= imm;
-      break;
-    }
-    case LerosInstr::loadh: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFF;
-      m_acc = 0;
-      m_acc |= imm << 8;
-      m_acc |= bottom;
-      break;
-    }
-    case LerosInstr::loadh2: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFF;
-      m_acc = 0;
-      m_acc |= imm << 16;
-      m_acc |= bottom;
-      break;
-    }
-    case LerosInstr::loadh3: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFFFF;
-      m_acc = 0;
-      m_acc |= imm << 24;
-      m_acc |= bottom;
-      break;
-    }
+    case LerosInstr::loadi:  m_acc = simm8; break;
+    case LerosInstr::load:   m_acc = m_reg[uimm8]; break;
+    case LerosInstr::Andi:   m_acc &= uimm8; break;
+    case LerosInstr::And:    m_acc &= m_reg[uimm8]; break;
+    case LerosInstr::Ori:    m_acc |= uimm8; break;
+    case LerosInstr::Or:     m_acc |= m_reg[uimm8]; break;
+    case LerosInstr::Xori:   m_acc ^= uimm8; break;
+    case LerosInstr::Xor:    m_acc ^= m_reg[uimm8]; break;
+    case LerosInstr::loadhi:  m_acc = (m_acc & 0xff) | simm8 << 8;  break;
+    case LerosInstr::loadh2i: m_acc = (m_acc & 0xffff) | simm8 << 16; break;
+    case LerosInstr::loadh3i: m_acc = (m_acc & 0xffffff) | simm8 << 24; break;
 #ifdef LEROS64
-    case LerosInstr::loadh4: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFFFFFF;
-      m_acc = 0;
-      m_acc |= imm << 32;
-      m_acc |= bottom;
-      break;
-    }
-    case LerosInstr::loadh5: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFFFFFFFF;
-      m_acc = 0;
-      m_acc |= imm << 40;
-      m_acc |= bottom;
-      break;
-    }
-    case LerosInstr::loadh6: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFFFFFFFFFF;
-      m_acc = 0;
-      m_acc |= imm << 48;
-      m_acc |= bottom;
-      break;
-    }
-    case LerosInstr::loadh7: {
-      // the immediate has been sign extended through getImmediate()
-      MVT bottom = m_acc & 0xFFFFFFFFFFFFFF;
-      m_acc = 0;
-      m_acc |= imm << 56;
-      m_acc |= bottom;
-      break;
-    }
+    case LerosInstr::loadh4i: m_acc = (m_acc & 0xffffffff) | imm << 32; break;
+    case LerosInstr::loadh5i: m_acc = (m_acc & 0xffffffffff) | imm << 40; break;
+    case LerosInstr::loadh6i: m_acc = (m_acc & 0xffffffffffff) | imm << 48; break;
+    case LerosInstr::loadh7i: m_acc = (m_acc & 0xffffffffffffff) | imm << 56; break;
 #endif
     case LerosInstr::store: {
-      if (!isImmediate) {
-        m_reg[uImmRaw] = m_acc;
-        setModified(uImmRaw);
-      } else {
-        assert("store does not work with and immediate operand?");
-      }
+        m_reg[uimm8] = m_acc;
+        setModified(uimm8);
       break;
     }
-    case LerosInstr::out: {
-      assert("Unimplemented");
-      break;
-    }
-    case LerosInstr::in: {
-      assert("Unimplemented");
-      break;
-    }
+    case LerosInstr::out: assert("Unimplemented"); break;
+    case LerosInstr::in: assert("Unimplemented"); break;
     case LerosInstr::jal: {
       if (m_acc > m_entryPoint + m_textSize) {
         assert("Executing code outside of .text segment");
       }
-      if (uImmRaw == 0 & m_options.exitOnJalRA)
+      if ((uimm8 == 0) & m_options.exitOnJalRA)
         return JAL_RA_EXIT;
-      m_reg[uImmRaw] = m_pc + ILEN; // Store PC + 2 bytes
-      setModified(uImmRaw);
-      m_pc = m_acc;
+      m_reg[uimm8] = m_pc + ILEN; // Store PC + 2 bytes
+      setModified(uimm8);
+      m_pc = static_cast<uint32_t>(m_acc);
       return ALL_OK;
     }
-    case LerosInstr::br: {
-      m_pc += simm13lsb0;
-      return ALL_OK;
-    }
+    case LerosInstr::br: m_pc += simm13lsb0; return ALL_OK;
     case LerosInstr::brz: {
       if (m_acc == 0) {
         m_pc += simm13lsb0;
@@ -469,32 +366,19 @@ private:
       }
       break;
     }
-    case LerosInstr::ldaddr: {
-      m_addr = m_reg[uImmRaw];
-      break;
-    }
+    case LerosInstr::ldaddr: m_addr = m_reg[uimm8]; break;
     case LerosInstr::ldind: {
       const auto addr = m_addr + simm8;
       const auto value = static_cast<MVT_S>(m_mem.read(addr));
       m_acc = value;
       break;
     }
-    case LerosInstr::ldindbu: {
-      auto start = ARGV_START;
-      auto value = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF;
-      m_acc = value;
-      break;
-    }
-    case LerosInstr::stind: {
-      m_mem.write((m_addr + simm8), m_acc, 4);
-      break;
-    }
-    case LerosInstr::stindb: {
-      m_mem.write((m_addr + simm8), m_acc & 0xFF, 1);
-      break;
-    }
+    case LerosInstr::ldindbu: m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF; break;
+
+    case LerosInstr::stind: m_mem.write((m_addr + simm8), m_acc, 4); break;
+    case LerosInstr::stindb: m_mem.write((m_addr + simm8), m_acc & 0xFF, 1); break;
     case LerosInstr::scall: {
-      switch (imm) {
+      switch (uimm8) {
       default:
       case 0:
         return SCALL;
@@ -508,6 +392,8 @@ private:
       }
     }
     }
+    // clang-format on
+
     m_pc += ILEN;
     return ALL_OK;
   }
