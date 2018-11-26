@@ -76,7 +76,8 @@ class Driver:
         nameMap["o"] = filename + ".o"
         nameMap["bin"] = filename + ".bin"
         nameMap["exec"] = filename
-        nameMap["lerosExec"] = filename + "lerosExec"
+        nameMap["lerosExec_O0"] = filename + "lerosExec_O0"
+        nameMap["lerosExec_O1"] = filename + "lerosExec_O1"
         return nameMap
 
     def parseSimulatorOutput(self, outputString):
@@ -96,8 +97,9 @@ class Driver:
         # Get the names which will be generated
         testNames = self.getTestNames(spec.testFile)
 
-        # Run compiler
-        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-ffreestanding", testNames["c"], "-o", testNames["lerosExec"]])
+        # Run Leros compiler
+        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-ffreestanding", "-O0", testNames["c"], "-o", testNames["lerosExec_O0"]])
+        subprocess.call([os.path.join(self.options.llvmPath, "clang"), "--target=leros32", "-ffreestanding", "-O1", testNames["c"], "-o", testNames["lerosExec_O1"]])
 
         # Compile to host system with the -DLEROS_HOST_TEST flag using g++
         subprocess.call(["g++", "-DLEROS_HOST_TEST", "-std=c++11", testNames["c"], "-o", testNames["exec"]])
@@ -144,7 +146,8 @@ class Driver:
 
         # Cleanup
         os.remove(self.testNames["exec"])
-        os.remove(self.testNames["lerosExec"])
+        os.remove(self.testNames["lerosExec_O0"])
+        os.remove(self.testNames["lerosExec_O1"])
 
     def regstateToString(self, regstate):
         s = ""
@@ -154,22 +157,28 @@ class Driver:
 
     def executeSimulator(self, testPath, argv, expectedRegState):
         # Run the test with the given options:
+        rawOutputs = []
         try:
-            output = (subprocess.check_output([self.options.simExecutable + " --osmr --argv=\"" +
-                                               argv + "\" -f " + self.testNames["lerosExec"]], shell=True))
+            rawOutputs.append((subprocess.check_output([self.options.simExecutable + " --osmr --argv=\"" +
+                                               argv + "\" -f " + self.testNames["lerosExec_O0"]], shell=True)))
+            rawOutputs.append((subprocess.check_output([self.options.simExecutable + " --osmr --argv=\"" +
+                                                     argv + "\" -f " + self.testNames["lerosExec_O1"]], shell=True)))
         except subprocess.CalledProcessError as e:
             print(e.output)
             return True
 
         # Parse simulator output
-        output = self.parseSimulatorOutput(output)
+        outputs = []
+        for rawOutput in rawOutputs:
+            outputs.append(self.parseSimulatorOutput(rawOutput))
 
         # Verify output
         discrepancy = False
-        for expectedReg in expectedRegState:
-            if output[expectedReg] != expectedRegState[expectedReg]:
-                discrepancy = True
-                print("FAIL (ARG: %s):      In R:%d;  Expected: %d    Actual: %d" % (argv, expectedReg, expectedRegState[expectedReg], output[expectedReg]))
+        for output in outputs:
+            for expectedReg in expectedRegState:
+                if output[expectedReg] != expectedRegState[expectedReg]:
+                    discrepancy = True
+                    print("FAIL (ARG: %s):      In R:%d;  Expected: %d    Actual: %d" % (argv, expectedReg, expectedRegState[expectedReg], output[expectedReg]))
 
         return discrepancy
 
