@@ -97,7 +97,6 @@ struct LerosOptions {
   std::string argv;
   std::string filename;
   bool onlyShowModifiedRegs;
-  bool exitOnJalRA;
   bool printState;
 };
 
@@ -330,8 +329,6 @@ private:
       if (m_acc > m_entryPoint + m_textSize) {
         assert("Executing code outside of .text segment");
       }
-      if ((uimm8 == 0) & m_options.exitOnJalRA)
-        return JAL_RA_EXIT;
       m_reg[uimm8] = m_pc + ILEN; // Store PC + 2 bytes
       setModified(uimm8);
       m_pc = static_cast<uint32_t>(m_acc);
@@ -420,7 +417,6 @@ void setupOptions(cxxopts::Options &options) {
   // clang-format off
   options.add_options()
           ("f,file", "File name - Required", cxxopts::value<std::string>())
-          ("je", "End simulation upon encountering jal ra", cxxopts::value<bool>()->default_value("false"))
           ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
           ("osmr", "Only show modified registers in printout (implicitely enables --ps)", cxxopts::value<bool>()->default_value("false"))
           ("rs", "Initial register staet, commaseparated list of format '0:2,4:10,...", cxxopts::value<std::string>()->default_value(""))
@@ -468,7 +464,6 @@ int main(int argc, char *argv[]) {
   try {
     auto result = options.parse(argc, argv);
     opt.filename = result["f"].as<std::string>();
-    opt.exitOnJalRA = result["je"].as<bool>();
     opt.printState = result["ps"].as<bool>();
     opt.onlyShowModifiedRegs = result["osmr"].as<bool>();
     if (opt.onlyShowModifiedRegs) {
