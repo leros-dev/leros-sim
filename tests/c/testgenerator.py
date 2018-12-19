@@ -1,23 +1,28 @@
-test = """#define ACNT3
-#include "testmacro.h"
+test = """#include "testmacro.h"
 
-TEST_START{
-    unsigned v1 = ARG(0) & 0b%s;
-	unsigned v2 = ARG(1) | 0b%s;
-	unsigned v3 = ARG(2) ^ 0b%s;
-	unsigned v4 = v1 + v2 + v3;
-    TEST_END(v4);
+int main(int argc, char** argv){
+    int a0 = ARG(0);
+	char res = a0 %s 0;
+	TEST_RETURN(res);
 }
 """
+
+
+
 i = 0
 
-for i in range(1,32):
-	testname = "boolean_op_%s.c"
-	boolString = ""
-	for j in range(0, i):
-		boolString += "1"
-	text_file = open(testname % boolString, "w")
-	text_file.write(test % (boolString, boolString, boolString))
+arr = []
+arr.append((">","gt"))
+arr.append((">=","gte"))
+arr.append(("==","eq"))
+arr.append(("!=","neq"))
+arr.append(("<","lt"))
+arr.append(("<=","lte"))
+
+for (lhs, rhs) in arr:
+	testname = "signed_set_zero_%s.c" % rhs
+	text_file = open(testname, "w")
+	text_file.write(test % lhs)
 	text_file.close()
 
-	print("boolean_op_%s.c;0;12345678;1234567;0;12345678;1234567;0;12345678;1234567" % boolString)
+	print("tests/c/%s;-2;2;1" % testname)
