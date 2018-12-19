@@ -420,7 +420,7 @@ void setupOptions(cxxopts::Options &options) {
           ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
           ("osmr", "Only show modified registers in printout (implicitely enables --ps)", cxxopts::value<bool>()->default_value("false"))
           ("rs", "Initial register staet, commaseparated list of format '0:2,4:10,...", cxxopts::value<std::string>()->default_value(""))
-          ("argv", "Input argument(s) specified as a string \"1 2 foo bar\"", cxxopts::value<std::string>()->default_value(""))
+          ("argv", "Input argument(s) for C programs with a main(argc, argv) function, specified as a string \"1 2 foo bar\"", cxxopts::value<std::string>()->default_value(""))
           ;
   // clang-format on
 }
