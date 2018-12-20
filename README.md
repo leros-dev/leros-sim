@@ -25,6 +25,13 @@ To run all of the tests specified in the `simdrivertests.txt` file, execute the 
 Given these input arguments, the script will begin execution of all tests located in the test suite specification file:  
 `python simdriver.py --llp="..." --sim="..." --test="..."`
 
+Under the assumption that you have installed the leros tools in `~/leros-dev` and
+used the default configuration for building the tools, the command line is:
+
+```
+python simdriver.py --llp="~/leros-dev/build-leros-llvm/bin/" --sim="~/leros-dev/leros-sim/build-leros-sim/leros-sim" --test="~/leros-dev/leros-sim/simdrivertests.txt"
+```
+
 ## Adding tests
 An example of a simple test could be:
 ```c++
