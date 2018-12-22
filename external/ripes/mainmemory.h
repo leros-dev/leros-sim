@@ -7,6 +7,7 @@
 // RVAccess struct - used for keeping track of read and write access to memory,
 // for displaying in GUI
 enum class RW { Read, Write };
+enum class Endianness { LE, BE };
 typedef struct {
   uint32_t pc; // GUI converts pc value to an instruction
   RW rw;
@@ -14,24 +15,37 @@ typedef struct {
   uint32_t cycle;
 } RVAccess;
 
-template <typename key_T, typename value_T>
+template <typename key_T, typename value_T, Endianness _e>
 class MainMemoryTemplate : public std::map<key_T, value_T> {
 public:
   void write(uint32_t address, uint32_t value, int size) {
     // writes value to from the given address start, and up to $size bytes of
     // $value
     // Using the hashtable, new allocations will automatically be handled
-    for (int i = 0; i < size; i++) {
-      (*this)[address + i] = value & 0xff;
-      value >>= 8;
+    if (_e == Endianness::LE) {
+      for (int i = 0; i < size; i++) {
+        (*this)[address + i] = value & 0xff;
+        value >>= 8;
+      }
+    } else {
+      for (int i = size - 1; i >= 0; i--) {
+        (*this)[address + i] = value & 0xff;
+        value >>= 8;
+      }
     }
   }
-  uint32_t read(uint32_t address) {
+  uint32_t read(uint32_t address, unsigned size) {
     // Note: If address is not found in memory map, a default constructed object
     // will be created, and read. in our case uint8_t() = 0
-    uint32_t read =
-        ((*this)[address] | ((*this)[address + 1] << 8) |
-         ((*this)[address + 2] << 16) | ((*this)[address + 3] << 24));
+    uint32_t read = 0;
+
+    for (int i = 0; i < size; i++) {
+      if (_e == Endianness::BE)
+        read |= (*this)[address + i] << (8 * (size - 1 - i));
+      else
+        read |= (*this)[address + i] << i * 8;
+    }
+
     return read;
   }
   void reset(uint32_t textSize) {
@@ -50,6 +64,6 @@ public:
   }
 };
 
-typedef MainMemoryTemplate<uint32_t, uint8_t> MainMemory;
+typedef MainMemoryTemplate<uint32_t, uint8_t, Endianness::BE> MainMemory_BE;
 
 #endif // MAiNMEMORY_H

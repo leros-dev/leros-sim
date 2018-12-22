@@ -114,6 +114,8 @@ public:
 
       entryPoint = m_reader.get_entry();
 
+      assert((entryPoint != 0) && "Invalid entry point for ELF file");
+
       for (const ELFIO::section *section : m_reader.sections) {
         const auto sectionStart = section->get_address();
         const auto sectionEnd = sectionStart + section->get_size();
@@ -214,7 +216,7 @@ public:
 
   int clock() {
     m_instructionsExecuted++;
-    uint16_t instr = m_mem.read(m_pc) & 0xFFFF;
+    uint16_t instr = static_cast<uint16_t>(m_mem.read(m_pc, 2));
 
     // Constrain simulator to only run instructions in the .text segment
     if (m_pc >= m_entryPoint && m_pc <= m_entryPoint + m_textSize) {
@@ -366,11 +368,11 @@ private:
     case LerosInstr::ldaddr: m_addr = m_reg[uimm8]; break;
     case LerosInstr::ldind: {
       const auto addr = m_addr + simm8;
-      const auto value = static_cast<MVT_S>(m_mem.read(addr));
+      const auto value = static_cast<MVT_S>(m_mem.read(addr, sizeof(MVT_S)));
       m_acc = value;
       break;
     }
-    case LerosInstr::ldindbu: m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF; break;
+    case LerosInstr::ldindbu: m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8, 1)) & 0xFF; break;
 
     case LerosInstr::stind: m_mem.write((m_addr + simm8), m_acc, 4); break;
     case LerosInstr::stindb: m_mem.write((m_addr + simm8), m_acc & 0xFF, 1); break;
@@ -396,7 +398,7 @@ private:
   }
 
   std::set<unsigned> m_modifiedRegs;
-  MainMemoryTemplate<uint32_t, uint32_t> m_mem;
+  MainMemoryTemplate<uint32_t, uint32_t, Endianness::BE> m_mem;
   std::array<MVT_S, 256> m_reg;
   std::vector<uint32_t> m_trace;
   const int m_traceSize =
