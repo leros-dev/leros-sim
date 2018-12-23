@@ -32,7 +32,7 @@ enum class LerosInstr {
   addi,
   sub,
   subi,
-  shr,
+  sra,
   load,
   loadi,
   And,
@@ -248,7 +248,7 @@ private:
     case 0x09: return LerosInstr::addi;
     case 0x0c: return LerosInstr::sub;
     case 0x0d: return LerosInstr::subi;
-    case 0x10: return LerosInstr::shr;
+    case 0x10: return LerosInstr::sra;
     case 0x20: return LerosInstr::load;
     case 0x21: return LerosInstr::loadi;
     case 0x22: return LerosInstr::And;
@@ -291,14 +291,8 @@ private:
     case LerosInstr::add:  m_acc += m_reg[uimm8]; break;
     case LerosInstr::subi: m_acc -= simm8; break;
     case LerosInstr::sub:  m_acc -= m_reg[uimm8]; break;
-    case LerosInstr::shr: {
-#ifdef LEROS64
-      MVT mask = 0x7FFFFFFFFFFFFFFF;
-#else
-      MVT mask = 0x7FFFFFFF;
-#endif
+    case LerosInstr::sra: {
       m_acc >>= 1;
-      m_acc &= mask;
       break;
     }
     case LerosInstr::loadi:  m_acc = simm8; break;
