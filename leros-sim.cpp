@@ -359,14 +359,18 @@ private:
     }
     case LerosInstr::ldaddr: m_addr = m_reg[uimm8]; break;
     case LerosInstr::ldind: {
-      const auto addr = m_addr + simm8;
+      const auto addr = (m_addr + (simm8 << 2));
       const auto value = static_cast<MVT_S>(m_mem.read(addr));
       m_acc = value;
       break;
     }
     case LerosInstr::ldindbu: m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF; break;
 
-    case LerosInstr::stind: m_mem.write((m_addr + simm8), m_acc, 4); break;
+    case LerosInstr::stind:{
+        const auto addr = (m_addr + (simm8 << 2));
+        m_mem.write(addr, m_acc, 4);
+        break;
+    }
     case LerosInstr::stindb: m_mem.write((m_addr + simm8), m_acc & 0xFF, 1); break;
     case LerosInstr::scall: {
       switch (uimm8) {
