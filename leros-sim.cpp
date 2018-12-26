@@ -61,9 +61,11 @@ enum class LerosInstr {
   brn,
   ldaddr,
   ldind,
-  ldindbu,
+  ldindb,
+  ldindh,
   stind,
   stindb,
+  stindh,
   scall,
   unknown
 };
@@ -266,9 +268,11 @@ private:
     case 0x40: return LerosInstr::jal;
     case 0x50: return LerosInstr::ldaddr;
     case 0x60: return LerosInstr::ldind;
-    case 0x61: return LerosInstr::ldindbu;
+    case 0x61: return LerosInstr::ldindb;
+    case 0x62: return LerosInstr::ldindh;
     case 0x70: return LerosInstr::stind;
     case 0x71: return LerosInstr::stindb;
+    case 0x72: return LerosInstr::stindh;
     case 0xff: return LerosInstr::scall;
     }
     // clang-format on
@@ -364,7 +368,8 @@ private:
       m_acc = value;
       break;
     }
-    case LerosInstr::ldindbu: m_acc = static_cast<MVT_S>(m_mem.read(m_addr + simm8)) & 0xFF; break;
+    case LerosInstr::ldindb: m_acc = signextend<int,8>(m_mem.read(m_addr + simm8)); break;
+    case LerosInstr::ldindh: m_acc = signextend<int,16>(m_mem.read(m_addr + (simm8 << 1))); break;
 
     case LerosInstr::stind:{
         const auto addr = (m_addr + (simm8 << 2));
@@ -372,6 +377,7 @@ private:
         break;
     }
     case LerosInstr::stindb: m_mem.write((m_addr + simm8), m_acc & 0xFF, 1); break;
+    case LerosInstr::stindh: m_mem.write((m_addr + (simm8 << 1)), m_acc & 0xFFFF, 2); break;
     case LerosInstr::scall: {
       switch (uimm8) {
       default:
