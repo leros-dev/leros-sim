@@ -119,7 +119,7 @@ public:
       for (const ELFIO::section *section : m_reader.sections) {
         const auto sectionStart = section->get_address();
         const auto sectionEnd = sectionStart + section->get_size();
-        if (sectionStart != 0) {
+        if (sectionStart != 0 || section->get_name() == ".text") {
           if (section->get_name() == ".text") {
             m_textSize = section->get_size();
           }
