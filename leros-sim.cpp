@@ -100,6 +100,7 @@ struct LerosOptions {
   std::string filename;
   bool onlyShowModifiedRegs;
   bool printState;
+  bool dumpAccu;
 };
 
 class LerosSim {
@@ -184,6 +185,11 @@ public:
     std::cout << "PC: " << m_pc << std::endl;
     std::cout << "INSTRUCTIONS EXECUTED: " << m_instructionsExecuted
               << std::endl;
+  }
+
+  // Print accu
+  void printAccu() {
+    printf("%08x\n", m_acc);
   }
 
   void reset() {
@@ -422,6 +428,7 @@ void setupOptions(cxxopts::Options &options) {
   options.add_options()
           ("f,file", "File name - Required", cxxopts::value<std::string>())
           ("ps", "Print simulator state after simulation", cxxopts::value<bool>()->default_value("false"))
+          ("d", "Dump accumulator after each instruction", cxxopts::value<bool>()->default_value("false"))
           ("osmr", "Only show modified registers in printout (implicitely enables --ps)", cxxopts::value<bool>()->default_value("false"))
           ("rs", "Initial register staet, commaseparated list of format '0:2,4:10,...", cxxopts::value<std::string>()->default_value(""))
           ("argv", "Input argument(s) for C programs with a main(argc, argv) function, specified as a string \"1 2 foo bar\"", cxxopts::value<std::string>()->default_value(""))
@@ -469,6 +476,7 @@ int main(int argc, char *argv[]) {
     auto result = options.parse(argc, argv);
     opt.filename = result["f"].as<std::string>();
     opt.printState = result["ps"].as<bool>();
+    opt.dumpAccu = result["d"].as<bool>();
     opt.onlyShowModifiedRegs = result["osmr"].as<bool>();
     if (opt.onlyShowModifiedRegs) {
       opt.printState = true;
@@ -484,6 +492,8 @@ int main(int argc, char *argv[]) {
 
   while (sim.clock() == SimRetval::ALL_OK) {
     // Clock until return != ALL_OK
+    if (opt.dumpAccu)
+      sim.printAccu();
   }
 
   // Show the state of the processor
